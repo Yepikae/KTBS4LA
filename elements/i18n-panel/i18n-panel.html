@@ -1,0 +1,55 @@
+<!-- <link rel="import" href="../polymer/polymer.html"> -->
+
+<dom-module id="i18n-panel">
+
+  <template>
+      
+      <style>
+          :host{
+              display: block;
+          }
+          
+          img {
+              display: inline-block;
+              cursor: pointer;
+          }
+          
+          img:hover {
+              box-shadow: 0 0 0.1em #fff;
+          }
+          
+      </style>    
+      
+	  <img src="img/fr.svg" data-value="fr" on-click="_languageChanged" width="18px" height="12px"></img>
+    <img src="img/gb.svg" data-value="en" on-click="_languageChanged" width="18px" height="12px"></img>
+  </template>
+
+</dom-module>
+
+<script>
+
+Polymer({
+    
+    is: 'i18n-panel',
+    
+    properties: {
+        
+        /**
+         * The current language
+         */
+        language: {
+            type: String,
+            notify: true,
+            value: "fr"
+        }
+
+    },
+    
+    _languageChanged: function(evt){
+        this.set('language', evt.target.getAttribute('data-value'));
+        this.fire('languageChanged');
+        console.log(evt.target.getAttribute('data-value') );
+    },
+
+});
+</script>

@@ -1,0 +1,1171 @@
+<script src="pixi.min.js"></script>
+<script src="script.js"></script>
+
+<dom-module id="taaabs-trace-timeline-timeline">
+
+  <style>
+    :host {
+      display: block;
+    }
+
+    :host #target {
+      background-color: #1e1e1e;
+    }
+
+    :host #slidingPosition {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+
+  <template>
+    <div id="target" style="width:1020;margin: 0 auto;box-shadow:0 0 1em gray"></div>
+    <span id="slidingPosition">{{_slidingPosition}}</span>
+  </template>
+
+  <script>
+
+  /**
+  * Fired if the `begin` slider of the ZoomLine has been moved.
+  * Fired when mouseup.
+  *
+  * @event zlBeginMoved
+  */
+
+  /**
+  * Fired if the `end` slider of the ZoomLine has been moved.
+  * Fired when mouseup.
+  *
+  * @event zlEndMoved
+  */
+
+  /**
+  * Fired if the whole slider of the ZoomLine has been moved.
+  * Fired when mouseup.
+  *
+  * @event zlGlobalMoved
+  */
+
+  Polymer({
+    is: 'taaabs-trace-timeline-timeline',
+    properties: {
+
+      ////////////////////////////
+      // RENDERER TYPE, FOR GPU //
+      ////////////////////////////
+
+      /**
+      * True, uses an OpenGL renderer.
+      * False, uses a simple canvas.
+      *
+      * @attribute openGl
+      * @type Boolean
+      */
+      openGl: {
+        type: Boolean,
+        notify: true,
+        value: false
+      },
+
+      ///////////////////////
+      // GLOBAL ATTRIBUTES //
+      ///////////////////////
+
+      /**
+      * Begin time of the trace.
+      *
+      * @attribute begin
+      * @type Number
+      */
+      begin: {
+        type: Number,
+        notify: true,
+        value: null,
+        observer: '_beginChanged'
+      },
+
+      /**
+      * End time of the trace.
+      *
+      * @attribute end
+      * @type Number
+      */
+      end: {
+        type: Number,
+        notify: true,
+        value: null,
+        observer: '_endChanged'
+      },
+
+      /**
+      * Begin time of the trace.
+      *
+      * @attribute _begin
+      * @type Number
+      */
+      _begin: {
+        type: Number,
+        notify: true,
+        value: Number.POSITIVE_INFINITY
+      },
+
+      /**
+      * End time of the trace.
+      *
+      * @attribute _end
+      * @type Number
+      */
+      _end: {
+        type: Number,
+        notify: true,
+        value: Number.NEGATIVE_INFINITY
+      },
+
+      /**
+      * Format of the time.
+      * Can be "DATE" or "ORDER".
+      *
+      * @attribute format
+      * @type String
+      */
+      format: {
+        type: String,
+        notify: true,
+        value: "DATE"
+      },
+
+      /**
+      * The main PIXI.Container.
+      *
+      * @attribute _stage
+      * @type Object
+      */
+      _stage: {
+        type: Object,
+        notify: true,
+        value: function(){
+          return {};
+        }
+      },
+
+      /**
+      * The main PIXI.Renderer.
+      *
+      * @attribute _renderer
+      * @type Object
+      */
+      _renderer: {
+        type: Object,
+        notify: true,
+        value: function(){
+          return {};
+        }
+      },
+
+      /**
+      * The current sliding position in time.
+      * Displayed as a tooltip.
+      *
+      * @attribute _slidingPosition
+      * @type String
+      */
+      _slidingPosition: {
+        type: String,
+        notify: true,
+        value: ""
+      },
+
+      //////////////////////////////
+      // Trace DISPLAY ATTRIBUTES //
+      //////////////////////////////
+
+      /**
+      * The list of obsels currently displayed.
+      *
+      * @attribute _obselsDisplayed
+      * @type Array
+      */
+      _obselsDisplayed: {
+        type: Array,
+        notify: true,
+        value: function(){
+          return [];
+        }
+      },
+
+      /////////////////////////////////
+      // ZoomLine DISPLAY ATTRIBUTES //
+      /////////////////////////////////
+
+      /**
+      * The height of the ZoomLine.
+      *
+      * @attribute _zlHeight
+      * @type Number
+      */
+      _zlHeight: {
+        type: Number,
+        notify: true,
+        value: 19
+      },
+
+      /**
+      * The y-axis position of the ZoomLine.
+      *
+      * @attribute _zlYPosition
+      * @type Number
+      */
+      _zlYPosition: {
+        type: Number,
+        notify: true,
+        value: 0
+      },
+
+      /**
+      * The `begin` pointer of the ZoomLine.
+      *
+      * @attribute _zlBeginPointer
+      * @type Number
+      */
+      _zlBeginPointer: {
+        type: Number,
+        nofity: true,
+        value: 0
+      },
+
+      /**
+      * The `end` pointer of the ZoomLine.
+      *
+      * @attribute _zlEndPointer
+      * @type Number
+      */
+      _zlEndPointer: {
+        type: Number,
+        nofity: true,
+        value: 0
+      },
+
+      /**
+      * Main Pixi.Container of the ZoomLine.
+      *
+      * @attribute _zlContainer
+      * @type Object
+      */
+      _zlContainer: {
+        type: Object,
+        notify: true,
+        value: function(){
+          return {};
+        }
+      },
+
+      /**
+      * Pixi.Graphics blue rectangle of the ZoomLine.
+      *
+      * @attribute _zlRectangle
+      * @type Object
+      */
+      _zlRectangle: {
+        type: Object,
+        notify: true,
+        value: function(){
+          return {};
+        }
+      },
+
+      /**
+      * Pixi.Graphics begin slider of the ZoomLine.
+      *
+      * @attribute _zlBeginSlider
+      * @type Object
+      */
+      _zlBeginSlider: {
+        type: Object,
+        notify: true,
+        value: function(){
+          return {};
+        }
+      },
+
+      /**
+      * Pixi.Graphics end slider of the ZoomLine.
+      *
+      * @attribute _zlEndSlider
+      * @type Object
+      */
+      _zlEndSlider: {
+        type: Object,
+        notify: true,
+        value: function(){
+          return {};
+        }
+      },
+
+      /**
+      * Pixi.Graphics whole slider of the ZoomLine.
+      *
+      * @attribute _zlSliderPanel
+      * @type Object
+      */
+      _zlSliderPanel: {
+        type: Object,
+        notify: true,
+        value: function(){
+          return {};
+        }
+      },
+
+      /////////////////////////////////
+      // TimeLine DISPLAY ATTRIBUTES //
+      /////////////////////////////////
+
+      /**
+      * The end of the TimeLine.
+      *
+      * @attribute _tlEnd
+      * @type Number
+      */
+      _tlEnd: {
+        type: Number,
+        notify: true,
+        value: 20
+      },
+
+      /**
+      * The beginning of the TimeLine.
+      *
+      * @attribute _tlBegin
+      * @type Number
+      */
+      _tlBegin: {
+        type: Number,
+        notify: true,
+        value: 20
+      },
+
+      /**
+      * The y-axis position of the TimeLine.
+      *
+      * @attribute _tlYPosition
+      * @type Number
+      */
+      _tlYPosition: {
+        type: Number,
+        notify: true,
+        value: 20
+      },
+
+      /**
+      * The height of the TimeLine.
+      *
+      * @attribute _tlHeight
+      * @type Number
+      */
+      _tlHeight: {
+        type: Number,
+        notify: true,
+        value: 35
+      },
+
+      /**
+      * Main Pixi.Container of the TimeLine.
+      *
+      * @attribute _tlContainer
+      * @type Object
+      */
+      _tlContainer: {
+        type: Object,
+        notify: true,
+        value: function(){
+          return {};
+        }
+      },
+
+      /**
+      * Pixi.Graphics blue rectangle of the TimeLine.
+      *
+      * @attribute _tlRectangle
+      * @type Object
+      */
+      _tlRectangle: {
+        type: Object,
+        notify: true,
+        value: function(){
+          return {};
+        }
+      }
+    },
+
+
+	  listeners:{
+
+	  },
+
+    ready: function(){
+      // create an new instance of a pixi stage
+      this.set('_stage', new PIXI.Container());
+
+      // We add the size of our canvas.
+      this._stage._width = 1020;
+      this._stage._height = 55;
+
+      // Create a renderer instance.
+      if(this.openGl)
+        this.set('_renderer', new PIXI.autoDetectRenderer(1020, 55));
+      else
+        this.set('_renderer', new PIXI.CanvasRenderer(1020, 55));
+
+      // Add the renderer view element to the local DOM.
+      this.$.target.appendChild(this._renderer.view);
+
+    },
+
+    ///////////////////////
+    // UTILITY FUNCTIONS //
+    ///////////////////////
+
+    /**
+    * Initialize the visualization.
+    *
+    * @method initVisu
+    */
+    initVisu: function(){
+      this._initZoomLine();
+      this._initTimeLine();
+
+      var that = this;
+      function _animate() {
+
+          setTimeout( function(){
+            requestAnimationFrame( _animate );
+          }, 200 );
+
+          // render the stage
+          that._renderer.render(that._stage);
+      }
+
+      _animate();
+    },
+
+    /**
+    * Returns a Pixi.Graphics rectangle.
+    *
+    * @param {!required} x (Number) The x-axis position of the rectangle.
+    * @param {!required} y (Number) The y-axis position of the rectangle.
+    * @param {!required} width (Number) The width of the rectangle.
+    * @param {!required} height (Number) The height of the rectangle.
+    * @param {!required} color (HexColor) The color of the rectangle.
+    *
+    * @method _getRectangle
+    */
+    _getRectangle: function(x, y, width, height, color){
+    	var graphics = new PIXI.Graphics();
+    	graphics.beginFill(color);
+    	graphics.drawRect(x, y, width, height);
+    	return graphics;
+    },
+
+    /**
+    * Triggered when `begin` changes.
+    * Will set `_begin` witht he value of `begin` if `begin` is smaller.
+    *
+    * @method _beginChanged
+    */
+    _beginChanged: function(){
+      if( this.begin && this.begin < this._begin  ){
+        this._begin = this.begin;
+      }
+    },
+
+    /**
+    * Returns a Pixi.Graphics rectangle.
+    *
+    * @method _endChanged
+    */
+    _endChanged: function(){
+      if( this.end && this.end > this._end ){
+        this._end = this.end;
+      }
+    },
+
+
+    ////////////////////////////////
+    // ZoomLine DISPLAY FUNCTIONS //
+    ////////////////////////////////
+
+    /**
+    * Initialize the ZoomLine.
+    *
+    * @method _initZoomLine
+    */
+    _initZoomLine: function(){
+
+      // Set the begin & end pointers
+      this._zlEndPointer = this._end;
+      this._zlBeginPointer = this._begin;
+
+      this._zlContainer = new PIXI.Container();
+
+      this._zlRectangle = this._getRectangle(0,
+                                             this._zlYPosition,
+                                             this._stage._width,
+                                             this._zlHeight,
+                                             0x4183D7);
+      this._zlContainer.addChild( this._zlRectangle );
+      this._stage.addChild( this._zlContainer );
+
+      this._initZLSliderPanel();
+      this._initZLBeginSlider();
+      this._initZLEndSlider();
+
+    },
+
+    /**
+    * Updates the ZoomLine focused interval according to a 'begin' & 'end' time.
+    *
+    * @param {!required} begin (Number) The begin time of the selected interval.
+    * @param {!required} end (Number) The end time of the selected interval.
+    *
+    * @method _updateZoomLine
+    */
+    updateZoomLine: function(begin, end){
+      this._zlBeginPointer = begin;
+  		this._zlEndPointer = end;
+
+  		this._zlBeginSlider.position.x = ( (1000 - 0) / (this._end - this._begin) ) * ( begin - this._begin ) + 0;
+
+  		this._zlEndSlider.position.x = ( (1000 - 0) / (this._end - this._begin) ) * ( end - this._begin ) + 0;
+
+  		this._zlSliderPanel.position.x = ( (1000 - 0) / (this._end - this._begin) ) * ( begin - this._begin ) + 0;
+      this._zlSliderPanel.width = ( (1000 - 0) / (this._end - this._begin) ) * ( end - this._begin ) + 0 - this._zlSliderPanel.position.x;
+
+      this._tlBegin = begin;
+      this._tlEnd = end;
+      this.tlFormat();
+    },
+
+    /**
+    * Initialize '_zlBeginSlider'.
+    * Set the behaviors on mouse events.
+    *
+    * @method _initZLBeginSlider
+    */
+    _initZLBeginSlider: function(){
+
+      var that = this;
+
+      // Init the begin slider
+      this._zlBeginSlider = new PIXI.Graphics();
+  		this._zlBeginSlider.beginFill(0xaaaaaa);
+  		this._zlBeginSlider.drawCircle(0, 0 , 6);
+  		this._zlBeginSlider.position = {x:0, y: this._zlYPosition + 9};
+  		this._zlBeginSlider.interactive = true;
+  		this._zlBeginSlider.cursorStyle = "pointer";
+  		this._zlBeginSlider.dragging = false;
+  		this._zlBeginSlider.buttonMode = true;
+
+      // Set behavior on mousedown
+      this._zlBeginSlider.on('mousedown', function(event){
+
+        // Set the 1st event information into _zlBeginSlider
+  			this.data = event.data;
+        this.dragging = true;
+        this.originalY = this.data.originalEvent.clientY;
+
+  		});
+
+      // Set the behavior on mousemove
+      this._zlBeginSlider.on('mousemove', function(e){
+
+  			if (this.dragging)
+  			{
+  				if(this.data.getLocalPosition(this.parent).x < this.parent.getChildAt(2).position.x){
+
+  					if( this.data.getLocalPosition(this.parent).x >= 0 ){
+  						this.position.x = this.data.getLocalPosition(this.parent).x;
+  						this.parent.getChildAt(0).position.x = this.data.getLocalPosition(this.parent).x;
+  						this.parent.getChildAt(0).width = this.parent.getChildAt(2).position.x - this.position.x;
+  					}
+  					else{
+  						this.position.x = 0;
+  						this.parent.getChildAt(0).position.x = 0;
+  						this.parent.getChildAt(0).width = this.parent.getChildAt(2).position.x - this.position.x;
+  					}
+
+  				}
+  				else{
+  					this.position.x = this.parent.getChildAt(2).position.x;
+  					this.parent.getChildAt(0).position.x = this.parent.getChildAt(2).position.x;
+  					this.parent.getChildAt(0).width = this.parent.getChildAt(2).position.x - this.position.x;
+  				}
+
+          // Set the text of the tooltip element.
+          // X = (Position.end - Position.begin)/ (Time.end - Time.begin) * (Time - Time.begin) + Position.begin;
+          that._slidingPosition = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x - 0 ) + that._begin ) ;
+          if( that.format === "DATE"){
+            var date = new Date(that._slidingPosition);
+            that._slidingPosition = date.toDateString();
+          }
+
+          // Set the position of the tooltip element.
+  				that.$.slidingPosition.style.top = this.originalY  + 20;
+  				that.$.slidingPosition.style.left = this.data.originalEvent.clientX - ( that.$.slidingPosition.offsetWidth / 2 );
+  				that.$.slidingPosition.style.opacity = 1;
+  			}
+  		});
+
+      // Set the behavior on mouseup
+      this._zlBeginSlider.on('mouseup', function(){
+
+  			if(this.data.getLocalPosition(this.parent).x < this.parent.getChildAt(2).position.x
+  				&& this.data.getLocalPosition(this.parent).x >= 0){
+  				this.position.x = this.data.getLocalPosition(this.parent).x;
+  				this.parent.getChildAt(0).position.x = this.data.getLocalPosition(this.parent).x;
+
+  				this.parent.getChildAt(0).width = this.parent.getChildAt(2).position.x - this.position.x;
+  			}
+  			else{
+  				this.position.x = 0;
+  				this.parent.getChildAt(0).position.x = 0;
+  				this.parent.getChildAt(0).width = this.parent.getChildAt(2).position.x - this.position.x;
+  			}
+
+  			this.dragging = false;
+
+  			that.$.slidingPosition.style.opacity = 0;
+
+        that._zlBeginPointer = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x - 0 ) + that._begin ) ;
+
+  			that.fire('zlBeginMoved');
+  		});
+
+      // Set the behavior on mouseup outside the graphic element
+  		this._zlBeginSlider.on('mouseupoutside', function(){
+
+  			if(this.data.getLocalPosition(this.parent).x < this.parent.getChildAt(2).position.x
+  				&& this.data.getLocalPosition(this.parent).x >= 0){
+  				this.position.x = this.data.getLocalPosition(this.parent).x;
+  				this.parent.getChildAt(0).position.x = this.data.getLocalPosition(this.parent).x;
+
+  				this.parent.getChildAt(0).width = this.parent.getChildAt(2).position.x - this.position.x;
+  			}
+  			else{
+  				this.position.x = 0;
+  				this.parent.getChildAt(0).position.x = 0;
+  				this.parent.getChildAt(0).width = this.parent.getChildAt(2).position.x - this.position.x;
+  			}
+  			this.dragging = false;
+
+  			that.$.slidingPosition.style.opacity = 0;
+
+        that._zlBeginPointer = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x - 0 ) + that._begin ) ;
+
+        that.fire('zlBeginMoved');
+  		});
+
+      this._zlRectangle.addChild(this._zlBeginSlider);
+    },
+
+    /**
+    * Initialize '_zlEndSlider'.
+    * Set the behaviors on mouse events.
+    *
+    * @method _initZLEndSlider
+    */
+    _initZLEndSlider: function(){
+  		this._zlEndSlider = new PIXI.Graphics();
+  		this._zlEndSlider.beginFill(0xaaaaaa);
+  		this._zlEndSlider.drawCircle(0, 0 , 6);
+  		this._zlEndSlider.interactive = true;
+  		this._zlEndSlider.position = {x: this._stage._width, y: this._zlYPosition + 9};
+  		this._zlEndSlider.buttonMode = true;
+
+      var that = this;
+
+  		this._zlEndSlider.on('mousedown', function(event){
+
+  			this.data = event.data;
+  			this.dragging = true;
+        this.originalY = this.data.originalEvent.clientY;
+
+  		});
+  		this._zlEndSlider.on('mousemove', function(){
+
+  			if (this.dragging)
+  			{
+  				if(this.data.getLocalPosition(this.parent).x > this.parent.getChildAt(1).position.x){
+
+
+
+  					if( this.data.getLocalPosition(this.parent).x < this.parent.parent.parent._width ){
+
+  						this.position.x = this.data.getLocalPosition(this.parent).x;
+  						this.parent.getChildAt(0).width = this.position.x - this.parent.getChildAt(1).position.x;
+  					}
+  					else{
+
+  						this.position.x = this.parent.parent.parent._width;
+  						this.parent.getChildAt(0).width = this.position.x - this.parent.getChildAt(1).position.x;
+  					}
+
+  				}
+  				else{
+
+  					this.position.x = this.parent.getChildAt(1).position.x;
+  					this.parent.getChildAt(0).width = this.position.x - this.parent.getChildAt(1).position.x;
+  				}
+
+  				that._slidingPosition = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x - 0 ) + that._begin ) ;
+          if( that.format === "DATE"){
+            var date = new Date(that._slidingPosition);
+            that._slidingPosition = date.toDateString();
+          }
+  				that.$.slidingPosition.style.top = this.originalY  + 20;
+  				that.$.slidingPosition.style.left = this.data.originalEvent.clientX - ( that.$.slidingPosition.offsetWidth / 2 );
+  				that.$.slidingPosition.style.opacity = 1;
+
+  			}
+  		});
+  		this._zlEndSlider.on('mouseup', function(){
+
+  			if(this.data.getLocalPosition(this.parent).x < this.parent.getChildAt(2).position.x
+  				&& this.data.getLocalPosition(this.parent).x >= 0){
+  				this.position.x = this.data.getLocalPosition(this.parent).x;
+  				this.parent.getChildAt(0).position.x = this.data.getLocalPosition(this.parent).x;
+
+  				this.parent.getChildAt(0).width = this.parent.getChildAt(2).position.x - this.position.x;
+  			}
+
+  			this.dragging = false;
+
+        that._zlEndPointer = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x - 0 ) + that._begin ) ;
+
+        that.fire('zlEndMoved');
+
+        that.$.slidingPosition.style.opacity = 0;
+
+  		});
+  		this._zlEndSlider.on('mouseupoutside', function(){
+
+  			if(this.data.getLocalPosition(this.parent).x < this.parent.getChildAt(2).position.x
+  				&& this.data.getLocalPosition(this.parent).x >= 0){
+  				this.position.x = this.data.getLocalPosition(this.parent).x;
+  				this.parent.getChildAt(0).position.x = this.data.getLocalPosition(this.parent).x;
+
+  				this.parent.getChildAt(0).width = this.parent.getChildAt(2).position.x - this.position.x;
+  			}
+  			this.dragging = false;
+
+        that._zlEndPointer = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x - 0 ) + that._begin ) ;
+
+        that.fire('zlEndMoved');
+
+        that.$.slidingPosition.style.opacity = 0;
+  		});
+
+  		this._zlRectangle.addChild(this._zlEndSlider);
+  	},
+
+    /**
+    * Initialize '_zlSliderPanel'.
+    * Set the behaviors on mouse events.
+    *
+    * @method _initZLSliderPanel
+    */
+    _initZLSliderPanel: function(){
+  		this._zlSliderPanel = getRectangle(0,this._zlYPosition, this._stage._width, this._zlHeight, 0xffffff);
+  		this._zlSliderPanel.alpha = 0.5;
+      this._zlSliderPanel.interactive = true;
+      this._zlSliderPanel.buttonMode = true;
+
+      var that = this;
+
+      this._zlSliderPanel.on('mousedown', function(event){
+    		this.data = event.data;
+    		this.dragging = true;
+        this._deltaPos = this.data.getLocalPosition(this.parent).x - this.position.x;
+  		});
+
+  		this._zlSliderPanel.on('mousemove', function(){
+  			if (this.dragging)
+  			{
+  				if(this.data.getLocalPosition(this.parent).x - this._deltaPos > 0){
+  					if( this.data.getLocalPosition(this.parent).x - this._deltaPos + this.width < this.parent.parent.parent._width ){
+  						this.position.x = this.data.getLocalPosition(this.parent).x - this._deltaPos ;
+  					}
+  					else{
+  						this.position.x = this.parent.parent.parent._width - this.width;
+  					}
+
+  				}
+  				else{
+  					this.position.x = 0;
+  				}
+                  this.parent.getChildAt(2).position.x = this.position.x + this.width;
+                  this.parent.getChildAt(1).position.x = this.position.x;
+  			}
+  		});
+  		this._zlSliderPanel.on('mouseup', function(){
+
+  			if (this.dragging)
+  			{
+  				if(this.data.getLocalPosition(this.parent).x > 0){
+
+  					if( this.data.getLocalPosition(this.parent).x - this._deltaPos + this.width < this.parent.parent.parent._width ){
+
+  						this.position.x = this.data.getLocalPosition(this.parent).x - this._deltaPos ;
+  					}
+  					else{
+
+  						this.position.x = this.parent.parent.parent._width - this.width;
+  					}
+
+  				}
+  				else{
+  					this.position.x = 0;
+  				}
+
+                  this.parent.getChildAt(2).position.x = this.position.x + this.width;
+                  this.parent.getChildAt(1).position.x = this.position.x;
+
+  			}
+
+  			this.dragging = false;
+
+        that._zlBeginPointer = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x - 0 ) + that._begin ) ;
+
+        that._zlEndPointer = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x  + this.width - 0 ) + that._begin ) ;
+
+        that.fire('zlGlobalMoved');
+
+  		});
+  		this._zlSliderPanel.on('mouseupoutside', function(){
+
+  			if (this.dragging)
+  			{
+  				if(this.data.getLocalPosition(this.parent).x > 0){
+
+  					if( this.data.getLocalPosition(this.parent).x - this._deltaPos + this.width < this.parent.parent.parent._width ){
+
+  						this.position.x = this.data.getLocalPosition(this.parent).x - this._deltaPos ;
+  					}
+  					else{
+
+  						this.position.x = this.parent.parent.parent._width - this.width;
+  					}
+
+  				}
+  				else{
+  					this.position.x = 0;
+  				}
+
+                  this.parent.getChildAt(2).position.x = this.position.x + this.width;
+                  this.parent.getChildAt(1).position.x = this.position.x;
+
+  			}
+
+        that._zlBeginPointer = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x - 0 ) + that._begin ) ;
+
+        that._zlEndPointer = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x  + this.width - 0 ) + that._begin ) ;
+
+        that.fire('zlGlobalMoved');
+
+  		});
+
+  		this._zlRectangle.addChild(this._zlSliderPanel);
+  	},
+
+    ////////////////////////////////
+    // TimeLine DISPLAY FUNCTIONS //
+    ////////////////////////////////
+
+    /**
+    * Initialize the TimeLine.
+    *
+    * @method _initTimeLine
+    */
+    _initTimeLine: function(){
+      this._tlEnd = this._end;
+      this._tlBegin = this._begin;
+
+      this._tlContainer = new PIXI.Container();
+      this._tlRectangle = this._getRectangle(0,
+                                             this._tlYPosition,
+                                             this._stage._width,
+                                             this._tlHeight,
+                                             0x4183D7);
+
+      this._tlContainer.addChild(this._tlRectangle);
+   	  this._stage.addChild( this._tlContainer );
+
+      this._tlBegin = this._begin;
+      this._tlEnd = this._end;
+
+      this.tlFormat();
+    },
+
+    /**
+    * Format the TimeLine according to `format`.
+    *
+    * @method tlFormat
+    */
+    tlFormat: function(){
+
+  		switch(this.format){
+  			case "ORDER":
+  				this._tlFormatOrder();
+  				break;
+  			case "DATE":
+  				this._tlFormatDate();
+  				break;
+  			default:
+  				console.log("Error : Timeline Format unknown ( " + this.format + " ).");
+  				break;
+  		}
+
+  	},
+
+    /**
+    * Format the TimeLine as human readable dates.
+    *
+    * @method _tlFormatDate
+    */
+    _tlFormatDate: function(){
+
+  		this._tlContainer.removeChild(this._tlRectangle);
+      this._tlRectangle = getRectangle(0,
+                                       this._tlYPosition,
+                                       this._stage._width,
+                                       this._tlHeight,
+                                       0x4183D7);
+      this._tlContainer.addChild(this._tlRectangle);
+
+  		var x = this._tlBegin;
+  		var y = this._tlEnd;
+      var z = y - x;
+
+  		var originalDate = new Date(this._tlBegin);
+  		var dates = [];
+
+      console.log( (new Date(x)).toDateString() +" "+ (new Date(y)).toDateString() );
+
+  		// If z <  10 minutes
+  		if( z < 1000 * 60 * 10 ){
+  			originalDate.setSeconds(0);
+  			originalDate.setMinutes(0);
+  			originalDate.setHours(0);
+  			var newBegin = originalDate.getTime();
+
+  			while( newBegin < y ){
+  				if( newBegin > x ){
+  					if( originalDate.getSeconds() === 0 ){
+  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+ originalDate.getHours()+":"+originalDate.getMinutes()+"'";
+  						var dateTime = originalDate.getTime();
+  						dates.push( { big: true, ds: dateString, dt: dateTime} );
+  					}
+  					else{
+  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+ originalDate.getHours()+":"+originalDate.getMinutes()+"'";
+  						var dateTime = originalDate.getTime();
+  						dates.push( { big: false, ds: dateString, dt: dateTime} );
+  					}
+  				}
+  				originalDate = new Date( originalDate.getTime() + 10*1000 );
+  				newBegin = originalDate.getTime();
+  			}
+  		}
+  		// If z < 10 hours
+  		else if( z < 1000 * 60 * 60 * 10){
+  			originalDate.setSeconds(0);
+  			originalDate.setMinutes(0);
+  			originalDate.setHours(0);
+  			var newBegin = originalDate.getTime();
+
+  			while( newBegin < y ){
+  				if( newBegin > x ){
+  					if( originalDate.getMinutes() === 0 ){
+  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+ originalDate.getHours()+":"+originalDate.getMinutes()+"'";
+  						var dateTime = originalDate.getTime();
+  						dates.push( { big: true, ds: dateString, dt: dateTime} );
+  					}
+  					else{
+  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+ originalDate.getHours()+":"+originalDate.getMinutes()+"'";
+  						var dateTime = originalDate.getTime();
+  						dates.push( { big: false, ds: dateString, dt: dateTime} );
+  					}
+  				}
+  				originalDate = new Date( originalDate.getTime() + 10*60*1000 );
+  				newBegin = originalDate.getTime();
+  			}
+  		}
+  		// If z < 10 days
+  		else if( z < 1000 * 60 * 60 * 24 * 10){
+  			originalDate.setSeconds(0);
+  			originalDate.setMinutes(0);
+  			originalDate.setHours(0);
+  			var newBegin = originalDate.getTime();
+
+  			while( newBegin < y ){
+  				if( newBegin > x ){
+  					if( originalDate.getHours() === 0 ){
+  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth();
+  						var dateTime = originalDate.getTime();
+  						dates.push( { big: true, ds: dateString, dt: dateTime} );
+  					}
+  					else{
+  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+ originalDate.getHours()+":"+originalDate.getMinutes()+"'";
+  						var dateTime = originalDate.getTime();
+  						dates.push( { big: false, ds: dateString, dt: dateTime} );
+  					}
+  				}
+  				originalDate = new Date( originalDate.getTime() + 10*60*60*1000 );
+  				newBegin = originalDate.getTime();
+  			}
+  		}
+  		// If z < 10 months
+  		else if( z < 1000 * 60 * 60 * 24 * 30.5 * 10){
+  			originalDate.setSeconds(0);
+  			originalDate.setMinutes(0);
+  			originalDate.setHours(0);
+  			originalDate.setDate(1);
+  			var newBegin = originalDate.getTime();
+
+  			while( newBegin < y ){
+  				if( newBegin > x ){
+  					if( originalDate.getDate() === 1 ){
+  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+originalDate.getFullYear();
+  						var dateTime = originalDate.getTime();
+  						dates.push( { big: true, ds: dateString, dt: dateTime} );
+  					}
+  					else{
+  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+originalDate.getFullYear();
+  						var dateTime = originalDate.getTime();
+  						dates.push( { big: false, ds: dateString, dt: dateTime} );
+  					}
+  				}
+  				originalDate = new Date( originalDate.getTime() + 10*24*60*60*1000 );
+  				newBegin = originalDate.getTime();
+  			}
+  		}
+  		// If z < 10 years
+  		else if( z < 1000 * 60 * 60 * 24 * 365 * 10){
+  			originalDate.setSeconds(0);
+  			originalDate.setMinutes(0);
+  			originalDate.setHours(0);
+  			originalDate.setDate(1);
+  			originalDate.setMonth(1);
+  			var newBegin = originalDate.getTime();
+
+  			while( newBegin < y ){
+  				if( newBegin > x ){
+  					if( originalDate.getMonth() === 1 ){
+  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+originalDate.getFullYear();
+  						var dateTime = originalDate.getTime();
+  						dates.push( { big: true, ds: dateString, dt: dateTime} );
+  					}
+  					else{
+  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+originalDate.getFullYear();
+  						var dateTime = originalDate.getTime();
+  						dates.push( { big: false, ds: dateString, dt: dateTime} );
+  					}
+  				}
+  				originalDate = new Date( originalDate.getTime() + 10*31*24*60*60*1000 );
+  				originalDate.setDate(1);
+  				newBegin = originalDate.getTime();
+  			}
+  		}
+  		else{
+  			alert('really? A trace over ten years?');
+  		}
+
+  		for( var i = 0; i < dates.length; i++){
+  			var val = dates[i].dt;
+  			var line = undefined;
+
+  			//var pixelPos = ( val / z ) * this._width-20;
+
+        var pixelPos =  (val - this._tlBegin) * (1000 - 0) / (this._tlEnd - this._tlBegin) + 0;
+
+  			pixelPos = pixelPos + 10;
+
+  			if( dates[i].big ){
+  				line = this._getRectangle(pixelPos-1, this._tlYPosition, 3, 7, 0xef5350);
+  				var text = new PIXI.Text(dates[i].ds,{font : '10px Arial', fill : 0xffffff, align : 'center'});
+  				text.x = pixelPos - text.width/2;
+  				text.y = this._tlYPosition + 10;
+  				text.alpha = 0.87;
+  				this._tlRectangle.addChild(text);
+  			}
+  			else{
+  				line = this._getRectangle(pixelPos, this._tlYPosition, 1, 7, 0xffffff);
+  				var text = new PIXI.Text(dates[i].ds,{font : '10px Arial', fill : 0xffffff, align : 'center'});
+  				text.x = pixelPos - text.width/2;
+  				text.y = this._tlYPosition + 10;
+  				text.alpha = 0.87;
+  				this._tlRectangle.addChild(text);
+  			}
+  			line.alpha = 0.87;
+  			this._tlRectangle.addChild(line);
+  		}
+
+  	},
+
+    /**
+    * Format the TimeLine as human readable dates.
+    *
+    * @method _tlFormatOrder
+    */
+    _tlFormatOrder: function(){
+      this._tlContainer.removeChild(this._tlRectangle);
+      this._tlRectangle = getRectangle(0,
+                                       this._tlYPosition,
+                                       this._stage._width,
+                                       this._tlHeight,
+                                       0x4183D7);
+      this._tlContainer.addChild(this._tlRectangle);
+
+  		var x = this._tlBegin;
+  		var y = this._tlEnd;
+      var z = y - x;
+
+  		var z = y - x;
+
+  		var z_2 = z / 10;
+
+  		var interval = Math.pow( 10 , Math.floor( Math.log10( z_2 ) ) );
+
+  		var cut = y / interval;
+  		var start = x - (x % interval);
+
+  		for( var i = 0 ; i < cut ; i ++ ){
+
+  			var val = start + interval*i;
+  			var line = undefined;
+
+  			var pixelPos =  (val - this._tlBegin) * (1000 - 0) / (this._tlEnd - this._tlBegin) + 0;
+
+  			pixelPos = pixelPos + 10;
+
+  			if( (val / interval) % 10 === 0){
+  				line = this._getRectangle(pixelPos, this._tlYPosition, 1, 15, 0xffffff);
+  				var text = new PIXI.Text(val,{font : '12px Arial', fill : 0xffffff, align : 'center'});
+  				text.x = pixelPos - text.width/2;
+  				text.y = this._tlYPosition + 15;
+  				text.alpha = 0.87;
+  				this._tlRectangle.addChild(text);
+  			}
+  			else if( (val / interval) % 5 === 0){
+  				line = this._getRectangle(pixelPos, this._tlYPosition, 1, 10, 0xffffff);
+  			}
+  			else{
+  				line = this._getRectangle(pixelPos, this._tlYPosition, 1, 5, 0xffffff);
+  			}
+  			line.alpha = 0.87;
+  			this._tlRectangle.addChild(line);
+
+  		}
+  	}
+
+    });
+  </script>
+</dom-module>

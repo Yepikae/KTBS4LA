@@ -1,0 +1,335 @@
+<dom-module id="taaabs-trace-details">
+  
+
+  <template> 
+    
+    <style>
+      :host {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      
+      table{
+        width: 100%;
+      }
+      
+      th{
+        text-align:left;
+      }
+
+      dd {
+        padding-left: 20px;
+      }
+      #modes{
+        display: block;
+        width: 100%;
+      }
+
+      #visuMode{
+        display: block;
+        float:left;
+        width: 100%;
+        opacity: 1;
+        -webkit-transition: opacity .3s ease-in-out;
+        -moz-transition: opacity .3s ease-in-out;
+        -ms-transition: opacity .3s ease-in-out;
+        -o-transition: opacity .3s ease-in-out;
+        transition: opacity .3s ease-in-out;
+      }
+
+      #editMode{
+        display: block;
+        float: left;
+        width : 100%;
+        margin-left: -100%;
+        opacity: 0;
+        pointer-events: none;
+        -webkit-transition: opacity .3s ease-in-out;
+        -moz-transition: opacity .3s ease-in-out;
+        -ms-transition: opacity .3s ease-in-out;
+        -o-transition: opacity .3s ease-in-out;
+        transition: opacity .3s ease-in-out;
+      }
+
+      .editIcons{
+        float:right;
+        opacity: 0.87;
+        cursor: pointer;
+      }
+
+      .editIcons:hover{
+        opacity: 1;
+      }
+
+      #editSubmitIcon{
+        color: #87D37C;
+      }
+
+      #editCancelIcon{
+        color: #ef5e4a;
+      }
+
+      .externalLink{
+        border-bottom: dotted 1px white;
+        border-bottom-color: rgba(255,255,255,1);
+        cursor: pointer;
+        -webkit-transition: border-bottom-color .1s ease-in-out;
+        -moz-transition: border-bottom-color .1s ease-in-out;
+        -ms-transition: border-bottom-color .1s ease-in-out;
+        -o-transition: border-bottom-color .1s ease-in-out;
+        transition: border-bottom-color .1s ease-in-out;
+      }
+
+      .externalLink:hover{
+        border-bottom-color: rgba(255,255,255,0);
+      }
+    </style>
+    
+    <h3> <span>{{i18n.traceInformations.default}} : <span>{{_trace.id}}</span> </h3>
+    
+
+    <div id="modes">
+      <div id="visuMode">
+
+        <iron-icon icon="icons:create" title="{{i18n.editIcon.default}}" class="editIcons" id="editIcon"></iron-icon>
+        <dl> 
+          <dt> <strong> Url </strong> </dt>
+          <dd> <a href="{{_trace.uri}}" target="_blank"><span>{{_trace.uri}}</span></a></dd>
+          <dt> <strong> Label </strong></dt>
+          <dd> <span>{{_trace.label}}</span></dd>
+          <dt> <strong> Description </strong> </dt>
+          <dd> <span>{{_trace.note}}</span></dd>
+          <dt> <strong> Base </strong> </dt>
+          <dd> <span class="externalLink" id="baseLink">{{_trace.base_uri}}</span></dd>
+          <dt> <strong> {{i18n.model.default}} </strong> </dt>
+          <dd> <span class="externalLink" id="modelLink">{{_trace.model_uri}}</span></dd>
+        </dl>  
+
+      </div>
+
+      <div id="editMode">
+
+        <iron-icon icon="icons:close" class="editIcons" title="{{i18n.editCancelIcon.default}}" id="editCancelIcon"></iron-icon>
+        <iron-icon icon="icons:check" class="editIcons" title="{{i18n.editSubmitIcon.default}}" id="editSubmitIcon"></iron-icon>
+        <dl> 
+          <dt> Url </dt>
+          <dd> <a href="{{_trace.uri}}" target="_blank"><span>{{_trace.uri}}</span></a></dd>
+          <dt> Label </dt>
+          <dd> <input type="text" value="{{_traceLabel::input}}"></dd>
+          <dt> Description </dt>
+          <dd> <textarea value="{{_traceNote::input}}"></textarea></dd>
+        </dl> 
+      </div> 
+    </div>
+
+  </template>
+
+  <script>
+    
+    Polymer({
+      is: 'taaabs-trace-details',
+      properties: {
+        /**
+        * The base URL..
+        *
+        * @attribute baseUrl
+        * @type String
+        */
+        traceUrl: {
+          type: String,
+          notify: true,
+          value: "",
+		      observer: '_traceURLchanged'
+        },
+        
+        /**
+        * The base object.
+        *
+        * @attribute _trace
+        * @type Object
+        */
+        _trace: {
+          type: Object,
+          notify: true,
+          value: function(){
+            return {};
+          }
+        },
+
+        _traceLabel: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+
+        _traceNote: {
+          type: String,
+          notify: true,
+          value: ""
+        },  
+        
+        /**
+        * Localization object.
+        *
+        * @attribute i18n
+        * @type Object
+        */
+		    i18n: {
+            type: Object,
+            value: {
+				      "traceInformations" :{
+                "default": "Trace details",
+                "en": "Trace details",
+                "fr": "Informations sur la trace"
+              },
+              "editIcon": {
+                "default": "Edit",
+                "en": "Edit",
+                "fr": "Éditer"
+              },
+              "editCancelIcon": {
+                "default": "Cancel",
+                "en": "Cancel",
+                "fr": "Annuler"
+              },
+              "editSubmitIcon": {
+                "default": "Submit",
+                "en": "Submit",
+                "fr": "Valider"
+              },
+              "model": {
+                "default": "Model",
+                "en": "Model",
+                "fr": "Modèle"
+              }
+            },
+            notify: true
+        },
+        
+        /**
+        * Localization.
+        * fr, en.
+        * 
+        * @attribute language
+        * @type String 
+        */
+        language: {
+            type: String,
+            notify: true,
+            observer: "_languageChanged"
+        },
+		
+      },
+      
+      
+        listeners:{
+          'loadResource': '_loadResource',
+          'editIcon.click': '_switchToEditMode',
+          'editCancelIcon.click': '_switchToNotEditMode',
+          'editSubmitIcon.click': '_submitBaseChanges',
+          'baseLink.click': '_baseLinkClicked',
+          'modelLink.click': '_modelLinkClicked'
+        },
+        
+      
+      _languageChanged: function(){
+        for(var prop in this.i18n) {
+          var tmp = "i18n."+prop+".default";
+          this.set(tmp, this.i18n[prop][this.language]);
+        }
+      },
+      
+      ready: function(){
+        
+      },
+
+      _baseLinkClicked: function(e){
+        this.fire('baseClicked', {'baseURL':this._trace.base_uri,"which":e.which});
+      },
+
+      _modelLinkClicked: function(e){
+        if( this._trace.model_uri === "http://liris.cnrs.fr/silex/2011/simple-trace-model/" ){
+          window.open("http://liris.cnrs.fr/silex/2011/simple-trace-model/");
+        }
+        else{
+          this.fire('modelClicked', {'modelURL':this._trace.model_uri,"which":e.which});
+        }
+      },
+
+      _switchToEditMode: function(){
+        this.$.visuMode.style.opacity = 0;
+        this.$.visuMode.style.pointerEvents = 'none';
+        this.$.editMode.style.opacity = 1;
+        this.$.editMode.style.pointerEvents = 'auto';
+
+      },
+
+      _switchToNotEditMode: function(){
+        this.$.visuMode.style.opacity = 1;
+        this.$.visuMode.style.pointerEvents = 'auto';
+        this.$.editMode.style.opacity = 0;
+        this.$.editMode.style.pointerEvents = 'none';
+      },
+
+      _submitBaseChanges: function(){
+
+        var that = this;
+
+        var obj = [
+          ["label", this._traceLabel],
+          ["http://www.w3.org/2004/02/skos/core#note", this._traceNote]
+        ];
+        this._trace.modify_attributes( obj ).then( function(response){
+
+            that.set('_trace.label',  that._trace['label']);
+            that.set('_traceLabel', that._trace['label']);
+
+            that.set('_trace.note', that._trace['http://www.w3.org/2004/02/skos/core#note']);
+            that.set('_traceNote', that._trace['http://www.w3.org/2004/02/skos/core#note']);
+
+            that._switchToNotEditMode();
+
+          })
+          .catch( function(err){
+            console.log(err);
+          });
+
+      },
+      
+      _traceURLchanged: function(){
+        
+        this.set('_trace', new Samotraces.Ktbs.Trace(this.traceUrl));
+         
+      },
+
+      refresh: function(){
+        var that = this;
+        this._trace.load()
+            .then( function(){
+              var id = that._trace.uri.split('/');
+              id = id[id.length - 2];
+
+              that.set('_trace.id', id);
+
+              that.set('_trace.label',  that._trace['label']);
+              that.set('_traceLabel',  that._trace['label']);
+
+              that.set('_trace.note', that._trace['http://www.w3.org/2004/02/skos/core#note']);
+              that.set('_traceNote',  that._trace['http://www.w3.org/2004/02/skos/core#note']);
+
+              that.set('_trace.model_uri',  that._trace['model_uri']);
+              that.set('_trace.base_uri',  that._trace['base_uri']);
+
+              console.log(that._trace);
+
+
+            })
+            .catch( function(err){
+              console.log(err);
+            })
+      }
+	  
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,45 @@
+    <!DOCTYPE html>
+    <html>
+    <head>
+    	<meta charset=utf-8 />
+    	<title></title>
+    	<link href='http://cdn.jsdelivr.net/yasgui/2.1.4/yasgui.min.css' rel='stylesheet' type='text/css'/>
+      
+    	<!--[if IE]>
+    		<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    	<![endif]-->
+    </head>
+    <body>
+     <div id="showcase"></div>
+      <script src='http://cdn.jsdelivr.net/yasgui/2.1.4/yasgui.min.js'></script>
+      <script>
+    
+        document.addEventListener( "DOMContentLoaded", function(){
+          var yasgui = new YASGUI(document.getElementById("showcase"));
+
+
+          window.addEventListener('hashchange', function(){
+            var hash = location.hash.substr(1);
+
+            var json = JSON.parse( hash );
+            
+            var traceURL = json.traceURL;
+            
+            var request = decodeURI( json.request );
+
+            console.log( request );
+
+            yasgui.current().yasqe.setValue(request);
+
+            console.log( yasgui.current().yasqe.options.sparql );
+
+            yasgui.current().yasqe.options.sparql.endpoint = traceURL;
+          })
+          
+
+        }, false )
+        
+
+      </script>
+    </body>
+    </html>

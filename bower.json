@@ -1,0 +1,35 @@
+{
+  "name": "ktbs4la",
+  "version": "0.1.0",
+  "description": "Client side application for using ktbs in learning analytics context. Relative to the HUBBLE project.",
+  "main": "",
+  "keywords": [
+    "taaabs",
+    "ktbs",
+    "learning analytics",
+    "HUBBLE"
+  ],
+  "authors": [
+    "Yepikae"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer",
+    "iron-pages": "PolymerElements/iron-pages",
+    "iron-icons": "PolymerElements/iron-icons",
+    "iron-input": "PolymerElements/iron-input",
+    "iron-iconset-svg": "PolymerElements/iron-iconset-svg",
+    "taaabs-taaabs": "TaaabsElements/taaabs-taaabs",
+    "taaabs-base-overview": "TaaabsElements/taaabs-base-overview",
+    "taaabs-themes": "TaaabsElements/taaabs-themes",
+    "file-reader": "TaaabsElements/file-reader",
+    "jquery": "~2.1.4"
+  }
+}

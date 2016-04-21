@@ -1,0 +1,1024 @@
+<script src="pixi.min.js"></script>
+<script src="script.js"></script>
+<link rel="import" href="taaabs-trace-timeline-visu.html">
+<link rel="import" href="taaabs-trace-timeline-timeline.html">
+
+<link rel="import" href="taaabs-trace-timeline-icons.html">
+
+<dom-module id="taaabs-trace-timeline">
+
+  <style>
+    :host {
+      display: block;
+    }
+
+    :host #obselInfos{
+      position: absolute;
+      width: 100vw;
+      height: 100vh;
+      top: 0px;
+      left: 0px;
+      background-color: rgba(0,0,0,0.67);
+      opacity: 0;
+      pointer-events: none;
+
+      -webkit-transition: opacity .15s ease-in-out;
+      -moz-transition: opacity .15s ease-in-out;
+      -ms-transition: opacity .15s ease-in-out;
+      -o-transition: opacity .15s ease-in-out;
+      transition: opacity .15s ease-in-out;
+    }
+
+    :host #obselInfosModal{
+      position: absolute;
+      width: 800px;
+      left: 50vw;
+      margin-left: -400px;
+      top: 50px;
+      background-color: white;
+    }
+
+  </style>
+
+  <template>
+
+
+    <taaabs-trace-timeline-visu id="tttv"
+    obsels="{{_obsels}}"
+    begin="{{_traceBegin}}"
+    end="{{_traceEnd}}"
+    format="DATE"
+    style-template="{{traceStyleSheet}}">
+    </taaabs-trace-timeline-visu>
+
+    <taaabs-trace-timeline-timeline id="tttt"
+    begin="{{_traceBegin}}"
+    end="{{_traceEnd}}"
+    format="DATE">
+    </taaabs-trace-timeline-timeline>
+
+<!--
+    <div class="wrapper style5">
+      <div class="inner">
+        <template is="dom-repeat" items="{{_symbols}}">
+          <div style="display:inline-block; float:left; min-width: 25%; max-width: 25%; width: 25%; " col="{{index % 4}}">
+            <span>{{item.name}}</span>
+            <iron-icon icon="timeline-symbols:{{item.shape}}" style$="color:{{item.color}}"></iron-icon>
+            <input itemname="{{item.name}}" type="checkbox" checked on-click="_filterClicked"><label>active</label>
+          </div>
+        </template>
+      </div>
+    </div>
+
+
+    <div class="wrapper style5">
+      <div style="margin-top:20px" class="inner">
+        <div class="button" on-click="_tmpSortByType">
+          Trier par type
+        </div>
+        <br/><br/>
+        <div class="button" on-click="_tmpSortByPlayer">
+          Trier par joueur
+        </div>
+      </div>
+    </div>
+-->
+
+    <div id="obselInfos" on-click="_hideObselInfos">
+      <div id="obselInfosModal">
+        <div style="padding:5px;background-color:#21b2a6;color:white; width: 100%; text-align: center">
+            <h4>{{_tmpObselClicked.id}}</h4>
+        </div>
+        <div style="padding:10px;width: 100%; broder-bottom: solid 1px gray">
+          <div><b>Type: </b>{{_tmpObselClicked.type}}</div>
+          <div><b>Begin: </b>{{_tmpObselClicked.begin}}</div>
+          <div><b>End: </b>{{_tmpObselClicked.end}}</div>
+        </div>
+        <div style="padding:10px;width: 100%;">
+          <table>
+            <thead>
+              <tr>
+                <th> Attribute </th>
+                <th> Value </th>
+              </tr>
+            </thead>
+            <tbody>
+              <template is="dom-repeat" items="{{_tmpObselClickedRes}}">
+                <tr>
+                  <td>{{item.name}}</td>
+                  <td>{{item.value}}</td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <taaabs-trace-timeline-stylesheet style-sheet="{{traceStyleSheet}}" id="ttts">
+    </taaabs-trace-timeline-stylesheet>
+
+
+<!--
+    <div id="target" style="width:1020;margin: 0 auto; margin-top:100px;box-shadow:0 0 1em gray"></div>
+
+    <div>
+      <input id="byTypeCheckbox" type="checkbox" is="iron-input"></input>
+      <div style="display:block; width:1000px; margin: 0 auto;">
+        <template is="dom-repeat" items="{{_symbols}}">
+          <div style="display:inline-block; float:left; min-width: 25%; max-width: 25%; width: 25%; " col="{{index % 4}}">
+            <span>{{item.id}}</span>
+            <div style="width:10px; height:10px; background: red" symbol='{{item}}' on-click='_changeSymbol'></div>
+          </div>
+        </template>
+      </div>
+    </div>
+    <div>
+    <span>{{symbol.id}}</span>
+    <select value="{{_symbol.shape::change}}">
+      <option selected value="DIAMOND">DIAMOND</option>
+      <option value="STAR">STAR</option>
+      <option value="CIRCLE">CIRCLE</option>
+      <option value="SQUARE">SQUARE</option>
+    </select>
+    <select value="{{_symbol.color::change}}">
+      <option selected value="CF000F">DIAMOND</option>
+      <option value="59ABE3">STAR</option>
+      <option value="26A65B">CIRCLE</option>
+      <option value="F5AB35">SQUARE</option>
+    </select>
+    </div>
+
+-->
+
+  </template>
+
+
+
+  <script>
+
+    Polymer({
+      is: 'taaabs-trace-timeline',
+      properties: {
+        /**
+        * Url of the current trace.
+        *
+        * @attribute traceUrl
+        * @type String
+        */
+        traceUrl: {
+          type: String,
+          notify: true,
+          value: "",
+          observer: "_traceUrlChanged"
+        },
+
+        _trace: {
+          type: Object,
+          notify: true,
+          value:  function(){
+            return {};
+          }
+        },
+
+
+        _begin: {
+          type: Number,
+          notify: true,
+          value: -1
+        },
+
+        _end: {
+          type: Number,
+          notify: true,
+          value: -1
+        },
+
+        _traceBegin: {
+          type: Number,
+          notify: true,
+          value: -1
+        },
+
+        _traceEnd: {
+          type: Number,
+          notify: true,
+          value: -1
+        },
+
+        _loading: {
+          type: Boolean,
+          notify: true,
+          value: false
+        },
+
+        _stage: {
+          type: Object,
+          notify: true,
+          value: function(){
+            return {};
+          }
+        },
+
+        _tlm: {
+          type: Object,
+          notify: true,
+          value: function(){
+            return {};
+          }
+        },
+
+        _renderer:{
+          type: Object,
+          notify: true,
+          value: function(){
+            return {};
+          }
+        },
+
+        _obsels:{
+          type: Array,
+          notify: true,
+          value: function(){
+            return [];
+          }
+        },
+
+        _lastObsel: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        _byType:{
+          type: Boolean,
+          notify: true,
+          value: false
+        },
+
+        _symbols: {
+          type: Array,
+          notify: true,
+          value: function(){
+            return [];
+          }
+        },
+
+        _symbol: {
+          type: Object,
+          notify: true,
+          value: {
+            id : 'unset',
+            shape: 'DIAMOND',
+            color: 0x4183D7
+          }
+        },
+
+        // --------------------------//
+        // -- TEMPORARY VARIABLES -- //
+        // --------------------------//
+
+        _tmpStyleTemplate: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        _tmpObselClickedRes: {
+          type: Array,
+          notify: true,
+          value: function(){
+            return [];
+          }
+        },
+
+
+
+
+        /**
+        * Localization object.
+        *
+        * @attribute i18n
+        * @type Object
+        */
+		    i18n: {
+            type: Object,
+            value: {
+
+            },
+            notify: true
+        },
+
+        /**
+        * Localization.
+        * fr, en.
+        *
+        * @attribute language
+        * @type String
+        */
+        language: {
+            type: String,
+            notify: true,
+            observer: "_languageChanged"
+        },
+
+      },
+
+
+	  listeners:{
+      'getObsels': '_getObsels',
+      'byTypeCheckbox.click': '_byTypeCheckboxClicked'
+	  },
+
+
+      _languageChanged: function(){
+        for(var prop in this.i18n) {
+          var tmp = "i18n."+prop+".default";
+          this.set(tmp, this.i18n[prop][this.language]);
+        }
+      },
+
+      ready: function(){
+
+        /*
+
+        // create an new instance of a pixi stage
+        var stage = new PIXI.Container();
+
+        stage.width = 1020;
+        stage.height = 500;
+
+        // create a renderer instance.
+        //var renderer = PIXI.autoDetectRenderer(1020, 500);
+       var renderer = new PIXI.CanvasRenderer(1020, 500);
+
+        this.set('_renderer',renderer);
+
+        // add the renderer view element to the DOM
+        this.$.target.appendChild(renderer.view);
+
+        var bg = new PIXI.Graphics();
+        bg.beginFill(0x1e1e1e);
+        bg.drawRect(0,0,1020,400);
+        bg.endFill();
+        stage.addChild(bg);
+
+
+
+        this.set('_stage',stage);
+        this.set('_tlm', null);
+
+        */
+
+
+      },
+
+      _byTypeCheckboxClicked: function(){
+        if( this.$.byTypeCheckbox.checked ){
+          this.set('_symbols', []);
+          var keys = [];
+          // TEMPORAIRE
+          for(var i = 0; i < this._obsels.length; i++){
+            if( keys.indexOf( this._obsels[i]['@type'] ) === -1){
+              keys.push( this._obsels[i]['@type'] );
+              this.push('_symbols', {'id':this._obsels[i]['@type'],
+                                     'shape':'DIAMOND',
+                                     'color':0x4183D7} );
+            }
+          }
+        }
+      },
+
+      _changeSymbol: function(e){
+        this.set('_symbol', e.target.symbol);
+        this._setSymbol();
+      },
+
+      _setSymbol: function(){
+        for(var i = 0; i < this._obsels.length; i++){
+          if( this._obsels[i]['@type'] === this._symbol.id ){
+            this._obsels[i]['symbol'] = {
+              shape: this._symbol.shape,
+              color: parseInt(this._symbol.color, 16 ),
+              opacity: 1
+            };
+          }
+        }
+
+        this._tlm.updateUpperTrace( this._begin , this._end, this._getObselsInRange(this._begin, this._end) );
+        this._tlm.updateLowerTrace( this._begin , this._end, this._getObselsInRange(this._begin, this._end) );
+
+      },
+
+      _traceUrlChanged: function(){
+
+        if( this.traceUrl !== "" ){
+
+          //this.$.tttf.refresh();
+          this.set('_trace', new Samotraces.Ktbs.Trace(this.traceUrl));
+
+        }
+
+
+
+      },
+
+      _getFirstObsel: function(){
+
+        console.log(this);
+
+        var that = this;
+
+        return new Promise( function(resolve, reject){
+          that._trace.list_obsels({'limit':'1'})
+              .then( function(list){
+                that._trace.attributes.traceBegin = list[0].begin;
+                that.set('_traceBegin', list[0].begin);
+                resolve();
+              })
+              .catch( function(err){
+                console.log(err);
+                reject();
+              });
+        });
+      },
+
+      _getLastObsel: function(){
+
+        var that = this;
+
+        return new Promise( function(resolve, reject){
+          that._trace.list_obsels({'limit':'1','reverse':'true'})
+              .then( function(list){
+                that._trace.attributes.traceEnd = list[0].end;
+                that.set('_traceEnd', list[0].end);
+                resolve();
+              })
+              .catch( function(err){
+                console.log(err);
+                reject();
+              });
+        });
+      },
+
+      _getNextObsels: function(limit){
+
+        var limit = limit || 100;
+
+        var that = this;
+
+        return new Promise( function( resolve, reject){
+          that._trace.list_obsels({'after':that._lastObsel, 'limit':limit})
+              .then( function(list){
+                for(var i = 0; i < list.length; i++){
+
+                  // TEMPORARY FUNCTION
+                  that._checkSymbol(list[i]);
+
+                  that.push('_obsels', list[i]);
+                }
+                if(list.length > 0)
+                  resolve(list[list.length-1]['@id']);
+                else
+                  resolve(null);
+              })
+              .catch( function(err){
+                console.log(err);
+                reject();
+              })
+        })
+      },
+
+
+      // --------------------------//
+      // -- TEMPORARY FUNCTIONS -- //
+      // --------------------------//
+
+      _checkSymbol: function(obsel){
+
+        function getRandomInt(min, max) {
+          return Math.floor(Math.random() * (max - min)) + min;
+        }
+
+        if( this._tmpUseSymbol === "TYPE" ){
+          if( !this._tmpStyleTemplate.types[ obsel['@type'] ] ){
+            var rand = getRandomInt(0, this._tmpAvailableSymbols.length);
+            this._tmpStyleTemplate.types[ obsel['@type'] ] = this._tmpAvailableSymbols[ rand ];
+            this.push('_symbols', {
+              "name": obsel['@type'],
+              "shape": this._tmpAvailableSymbols[ rand ].shape,
+              "color": '#'+this._tmpAvailableSymbols[ rand ].color.toString(16)
+            });
+            this._tmpAvailableSymbols.splice( rand, 1);
+          }
+        }
+        else if( this._tmpUseSymbol === "PLAYER"){
+          if( !this._tmpStyleTemplate.attribute.values[ obsel[this._tmpStyleTemplate.attribute.name] ] ){
+            var rand = getRandomInt(0, this._tmpAvailableSymbols.length);
+            this._tmpStyleTemplate.attribute.values[ obsel[this._tmpStyleTemplate.attribute.name] ] = this._tmpAvailableSymbols[ rand ];
+            this.push('_symbols', {
+              "name": obsel[this._tmpStyleTemplate.attribute.name],
+              "shape": this._tmpAvailableSymbols[ rand ].shape,
+              "color": '#'+this._tmpAvailableSymbols[ rand ].color.toString(16)
+            })
+            this._tmpAvailableSymbols.splice( rand, 1);
+          }
+        }
+      },
+
+
+
+      _tmpSortByType: function(){
+
+        this.set('_tmpUseSymbol', "TYPE");
+
+        this.set('_tmpStyleTemplate', {
+          "focus": "TYPE",
+          "types": {},
+          "attribute":{
+            "name": "",
+            "values": {}
+          },
+          "filter":{
+            "active":false,
+            "types": [],
+            "attributes": {}
+          }
+        });
+
+        this.set('_tmpAvailableSymbols', []);
+        this.set('_symbols', []);
+
+        var colors = [ 0x21b2a6, 0x96281B, 0xC0392B, 0xD91E18, 0xF22613, 0xEF4836, 0xF64747, 0xE26A6A, 0xF2784B, 0xE87E04,
+          0xF89406, 0xF39C12, 0xF4B350, 0xF9BF3B, 0xe9d460, 0x87D37C, 0x2ECC71, 0x00B16A, 0x4DAF7C, 0x16a085, 0x36D7B7, 0x86E2D5,
+          0x65C6BB, 0x4ECDC4, 0x89C4F4, 0x6BB9F0, 0x5C97BF, 0x22A7F0, 0x4183D7, 0x336E7B, 0x663399, 0x913D88, 0x8E44AD, 0x9B59B6,
+          0x9A12B3, 0xECF0F1, 0xABB7B7, 0x95A5A6 ];
+        var shapes = [ "CIRCLE", "SQUARE", "STAR", "DIAMOND" ];
+
+        function getRandomInt(min, max) {
+          return Math.floor(Math.random() * (max - min)) + min;
+        }
+
+        for( var i = 0; i < 4; i++){
+          for( var j = 0; j < colors.length; j++){
+            this._tmpAvailableSymbols.push({
+              color: colors[j],
+              shape: shapes[i]
+            });
+          }
+        }
+
+        for( var i = 0; i < this._obsels.length; i++ ){
+          if( !this._tmpStyleTemplate.types[ this._obsels[i]['@type'] ] ){
+            var rand = getRandomInt(0, this._tmpAvailableSymbols.length);
+            this._tmpStyleTemplate.types[ this._obsels[i]['@type'] ] = this._tmpAvailableSymbols[ rand ];
+            this.push('_symbols', {
+              "name": this._obsels[i]['@type'],
+              "shape": this._tmpAvailableSymbols[ rand ].shape,
+              "color": '#'+this._tmpAvailableSymbols[ rand ].color.toString(16)
+            })
+            this._tmpAvailableSymbols.splice( rand, 1);
+          }
+        }
+      },
+
+      _tmpSortByPlayer: function(){
+        this.set('_tmpUseSymbol', "PLAYER");
+
+        this.set('_tmpStyleTemplate', {
+          "focus": "ATTRIBUTE",
+          "types": {},
+          "attribute":{
+            "name": "m:player",
+            "values": {}
+          },
+          "filter":{
+            "active":false,
+            "types": [],
+            "attributes": {}
+          }
+        });
+
+        this.set('_tmpAvailableSymbols', []);
+        this.set('_symbols', []);
+
+        var colors = [ 0x21b2a6, 0x96281B, 0xC0392B, 0xD91E18, 0xF22613, 0xEF4836, 0xF64747, 0xE26A6A, 0xF2784B, 0xE87E04,
+          0xF89406, 0xF39C12, 0xF4B350, 0xF9BF3B, 0xe9d460, 0x87D37C, 0x2ECC71, 0x00B16A, 0x4DAF7C, 0x16a085, 0x36D7B7, 0x86E2D5,
+          0x65C6BB, 0x4ECDC4, 0x89C4F4, 0x6BB9F0, 0x5C97BF, 0x22A7F0, 0x4183D7, 0x336E7B, 0x663399, 0x913D88, 0x8E44AD, 0x9B59B6,
+          0x9A12B3, 0xECF0F1, 0xABB7B7, 0x95A5A6 ];
+        var shapes = [ "CIRCLE", "SQUARE", "STAR", "DIAMOND" ];
+
+        function getRandomInt(min, max) {
+          return Math.floor(Math.random() * (max - min)) + min;
+        }
+
+        for( var i = 0; i < 4; i++){
+          for( var j = 0; j < colors.length; j++){
+            this._tmpAvailableSymbols.push({
+              color: colors[j],
+              shape: shapes[i]
+            });
+          }
+        }
+
+        for( var i = 0; i < this._obsels.length; i++ ){
+          if( !this._tmpStyleTemplate.attribute.values[ this._obsels[i][this._tmpStyleTemplate.attribute.name] ] ){
+            var rand = getRandomInt(0, this._tmpAvailableSymbols.length);
+            this._tmpStyleTemplate.attribute.values[ this._obsels[i][this._tmpStyleTemplate.attribute.name] ] = this._tmpAvailableSymbols[ rand ];
+            this.push('_symbols', {
+              "name": this._obsels[i][this._tmpStyleTemplate.attribute.name],
+              "shape": this._tmpAvailableSymbols[ rand ].shape,
+              "color": '#'+this._tmpAvailableSymbols[ rand ].color.toString(16)
+            })
+            this._tmpAvailableSymbols.splice( rand, 1);
+          }
+        }
+      },
+
+      _hideObselInfos: function(){
+        this.$.obselInfos.style.opacity = 0;
+        this.$.obselInfos.style.pointerEvents = "none";
+      },
+
+      _filterClicked: function(e){
+        console.log(e);
+        if(e.target.checked){
+          if( this._tmpStyleTemplate.focus === "TYPE" ){
+
+            this._tmpStyleTemplate.filter.types.push( e.target.itemname );
+
+          }
+          else if( this._tmpStyleTemplate.focus === "ATTRIBUTE" ){
+
+          }
+        }
+        else{
+          if( !this._tmpStyleTemplate.filter.active ){
+            this._tmpStyleTemplate.filter.active = true;
+            if( this._tmpStyleTemplate.focus === "TYPE" ){
+
+              var keys = Object.keys( this._tmpStyleTemplate.types );
+
+              for( var i = 0 ; i < keys.length ; i++ ){
+                if( keys[i] !== e.target.itemname ){
+                  this._tmpStyleTemplate.filter.types.push( keys[i] );
+                }
+              }
+
+            }
+            else if( this._tmpStyleTemplate.focus === "ATTRIBUTE" ){
+
+            }
+
+
+          }
+          else{
+            if( this._tmpStyleTemplate.focus === "TYPE" ){
+
+              for( var i = 0 ; i < this._tmpStyleTemplate.filter.types.length ; i++ ){
+                if( this._tmpStyleTemplate.filter.types[i] === e.target.itemname ){
+                  this._tmpStyleTemplate.filter.types.splice(i,1);
+                }
+              }
+
+            }
+            else if( this._tmpStyleTemplate.focus === "ATTRIBUTE" ){
+
+            }
+          }
+        }
+      },
+
+      _initTimeline: function( list ){
+        //this.set('_tlm', new TimeLineMain(this._trace.attributes.traceBegin,this._trace.attributes.traceEnd, this._stage) );
+
+        //this._tlm.init();
+
+        this.$.tttv.initVisu();
+        this.$.tttt.initVisu();
+
+        this.$.tttv.displayObsels(this._trace.attributes.traceBegin, list[list.length - 1].end, list);
+        this.$.tttt.updateZoomLine(this._trace.attributes.traceBegin, list[list.length - 1].end);
+
+        var that = this;
+        this.$.tttt.addEventListener('zlBeginMoved', function(){
+          that.$.tttv.displayObsels(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer, that._getObselsInRange(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer));
+          that.$.tttt.updateZoomLine(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer);
+        })
+        this.$.tttt.addEventListener('zlEndMoved', function(){
+          that.$.tttv.displayObsels(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer, that._getObselsInRange(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer));
+          that.$.tttt.updateZoomLine(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer);
+        })
+        this.$.tttt.addEventListener('zlGlobalMoved', function(){
+          that.$.tttv.displayObsels(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer, that._getObselsInRange(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer));
+          that.$.tttt.updateZoomLine(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer);
+        })
+        this.$.tttv.addEventListener('zoom', function(){
+
+          console.log( (new Date(that.$.tttv._zoomBegin)).toDateString() +" "+ (new Date(that.$.tttv._zoomEnd)).toDateString() );
+
+          var begin = that.$.tttv._zoomBegin;
+          var end = that.$.tttv._zoomEnd;
+
+          that.$.tttv.displayObsels(begin, end, that._getObselsInRange(that.$.tttv._zoomBegin, that.$.tttv._zoomEnd));
+          that.$.tttt.updateZoomLine(begin, end);
+        })
+        this.$.tttv.addEventListener('obselClicked', function(e){
+          var obs = e.detail.obs;
+          that._tmpObselClicked = {
+            "id": obs['@id'],
+            "type": obs['@type'],
+            "begin": ( new Date(obs['begin'])).toLocaleDateString() +"  "+ ( new Date(obs['begin'])).toLocaleTimeString(),
+            "end": ( new Date(obs['end'])).toLocaleDateString() +"  "+ ( new Date(obs['end'])).toLocaleTimeString()
+          }
+
+          that.set('_tmpObselClickedRes', []);
+          var keys = Object.keys(obs);
+          for( var i = 0; i < keys.length; i++ ){
+            if( keys[i] !== "@id" && keys[i] !== "@type" && keys[i] !== "begin" && keys[i] !== "en")
+              that.push('_tmpObselClickedRes', {
+                "name": keys[i],
+                "value": obs[keys[i]]
+              })
+          }
+
+          that.$.obselInfos.style.opacity = 1;
+          that.$.obselInfos.style.pointerEvents = "auto";
+        })
+
+        /*
+        var that = this;
+        function _animate() {
+
+            setTimeout( function(){
+              requestAnimationFrame( _animate );
+            }, 200 );
+
+            // render the stage
+            that._renderer.render(that._stage);
+        }
+
+        _animate();
+
+
+        var endOfList = list[list.length - 1].end;
+        this._tlm.updateUpperTrace(this._trace.attributes.traceBegin, endOfList, list );
+        this._tlm.updateLowerTrace(this._trace.attributes.traceBegin, endOfList, list );
+        this._tlm.updateZoomLine(this._trace.attributes.traceBegin, endOfList );
+
+        this.set('_begin', this._trace.attributes.traceBegin);
+        this.set('_end', endOfList);
+
+        this._tlm.focusIntervalChange = function(begin, end){
+          that._tlm.updateUpperTrace( begin , end, that._getObselsInRange(begin, end) );
+          that._tlm.updateLowerTrace( begin , end, that._getObselsInRange(begin, end) );
+
+          this.set('_begin', begin);
+          this.set('_end', end);
+
+        };
+        */
+      },
+
+
+
+      _getObsels: function(){
+        var that = this;
+        if( !this._lastObsel ){
+          that._trace.list_obsels({'limit':'100'})
+              .then( function(list){
+                for(var i = 0; i < list.length; i++){
+                  that.push('_obsels', list[i]);
+                }
+                that.set('_lastObsel', list[list.length-1]['@id']);
+
+                that._initTimeline( list );
+
+                that.fire('getObsels');
+              })
+              .catch( function(err){
+                console.log(err);
+              })
+        }
+        else{
+          this._getNextObsels()
+              .then( function(lastObsel){
+                if( lastObsel ){
+                  that.set('_lastObsel', lastObsel);
+                  that.fire('getObsels');
+                }
+                else{
+                  console.log(that._obsels);
+                }
+              })
+              .catch( function(err){
+                console.log(err);
+              })
+        }
+      },
+
+      _getObselsInRange: function( begin, end ){
+
+        var obsels = [];
+        var i = 0;
+        while( i < this._obsels.length && this._obsels[i].begin < begin ){
+          i++;
+        }
+        while( i < this._obsels.length && this._obsels[i].end <= end ){
+          obsels.push( this._obsels[i] );
+          i++;
+        }
+        return obsels;
+
+      },
+
+      refresh: function(){
+
+        if( !this._loading ){
+
+          var that = this;
+
+          this._trace.load()
+              .then( function(){
+                that._getFirstObsel()
+                    .then(function(){
+                      that._getLastObsel()
+                          .then( function(){
+                            that.fire('getObsels')
+                          })
+                          .catch( function(err){
+                            console.log(err);
+                          })
+                    })
+                    .catch( function(err){
+                      console.log(err);
+                    })
+              })
+              .catch( function(err){
+                console.log(err);
+              })
+
+
+
+
+/*
+            var that = this;
+            this._trace.load()
+                        .then( function(){
+                          console.log(that._trace);
+
+
+                          tlm.focusIntervalChange = function(begin, end){
+                            that._trace.list_obsels(Math.floor(begin), Math.floor(end))
+                                .then( function(obselList){
+                                  console.log( obselList );
+                                  tlm.updateUpperTrace(begin, end, obselList );
+                                })
+                                .catch( function(err){
+                                  console.log(err);
+                                });
+                          };
+
+
+                          if( !that._trace.attributes.traceBegin ){
+                            that._trace.list_obsels({'limit':'1','reverse':'true'})
+                                .then( function(list){
+                                    console.log(list);
+                                    that._trace.attributes.traceEnd = list[0].end;
+                                    that._trace.list_obsels({'limit':'100'})
+                                        .then( function(list){
+                                            console.log(list);
+                                            that._trace.attributes.traceBegin = list[0].begin;
+
+                                            console.log(that._tlm);
+                                            if( that._tlm === null){
+
+                                              function animate() {
+
+                                                  setTimeout( function(){
+                                                    requestAnimationFrame(animate);
+                                                  }, 200 );
+
+                                                  // render the stage
+                                                  that._renderer.render(that._stage);
+                                              }
+
+
+
+
+                                              var tlm = new TimeLineMain(that._trace.attributes.traceBegin,that._trace.attributes.traceEnd,that._stage);
+
+                                              function sortByPseudo(obsels){
+                                                var colors = [0xCF000F, 0x59ABE3, 0x26A65B, 0xF5AB35, 0x95A5A6, 0xDB0A5B];
+                                                var shapes = ['DIAMOND', 'CIRCLE', 'STAR', 'SQUARE'];
+                                                var keys = [];
+                                                var map = {};
+                                                for(var i = 0 ; i < obsels.length; i++){
+                                                  if( obsels[i]['m:xp/targetPlayerID'] !== "" ){
+                                                    if( keys.indexOf(obsels[i]['m:xp/targetPlayerID']) === -1 ){
+                                                      keys.push(obsels[i]['m:xp/targetPlayerID']);
+                                                      map[obsels[i]['m:xp/targetPlayerID']] = { 'shape':shapes[0],
+                                                                                                'color':colors[0],
+                                                                                                'opacity':1
+                                                                                                };
+                                                      colors.splice(0,1);
+                                                      if (colors.length === 0){
+                                                        colors = [0xCF000F, 0x59ABE3, 0x26A65B, 0xF5AB35, 0x95A5A6, 0xDB0A5B];
+                                                        shapes.splice(0,1);
+                                                      }
+                                                      obsels[i].symbol = map[obsels[i]['m:xp/targetPlayerID']];
+                                                    }
+                                                    else{
+                                                      obsels[i].symbol = map[obsels[i]['m:xp/targetPlayerID']];
+                                                    }
+                                                  }
+                                                  else if( obsels[i]['m:xp/sourcePlayerID'] !== "" ){
+                                                    if( keys.indexOf(obsels[i]['m:xp/sourcePlayerID']) === -1 ){
+                                                      keys.push(obsels[i]['m:xp/sourcePlayerID']);
+                                                      map[obsels[i]['m:xp/sourcePlayerID']] = { 'shape':shapes[0],
+                                                                                                'color':colors[0],
+                                                                                                'opacity':1
+                                                                                                };
+                                                      colors.splice(0,1);
+                                                      if (colors.length === 0){
+                                                        colors = [0xCF000F, 0x59ABE3, 0x26A65B, 0xF5AB35, 0x95A5A6, 0xDB0A5B];
+                                                        shapes.splice(0,1);
+                                                      }
+                                                      obsels[i].symbol = map[obsels[i]['m:xp/sourcePlayerID']];
+                                                    }
+                                                    else{
+                                                      obsels[i].symbol = map[obsels[i]['m:xp/sourcePlayerID']];
+                                                    }
+                                                  }
+                                                  else{
+                                                    obsels[i].symbol = {
+                                                      'shape' : 'round',
+                                                      'color' : 0x000000,
+                                                      'opacity' : 1
+                                                    }
+                                                  }                                                }
+                                              }
+
+                                              tlm.focusIntervalChange = function(begin, end){
+
+                                                that._trace.list_obsels({'mine':Math.floor(begin),'maxe': Math.floor(end)}, 60000)
+                                                  .then( function(list){
+                                                      var lend = list[list.length - 1].end;
+                                                      sortByPseudo(list);
+                                                      that._tlm.updateUpperTrace( list[0].begin , lend, list );
+                                                      that._tlm.updateLowerTrace( list[0].begin , lend, list );
+                                                    })
+                                                    .catch( function(err){
+                                                      console.log(err);
+                                                    });
+                                              };
+
+
+                                              tlm.init();
+                                              animate();
+                                              that.set('_tlm', tlm);
+                                              var endOfList = list[list.length - 1].end;
+
+                                              sortByPseudo(list);
+
+                                              that._tlm.updateUpperTrace(that._trace.attributes.traceBegin, endOfList, list );
+                                              that._tlm.updateLowerTrace(that._trace.attributes.traceBegin, endOfList, list );
+                                              that._tlm.updateZoomLine(that._trace.attributes.traceBegin, endOfList );
+                                            }
+
+                                        })
+                                        .catch( function(err){
+                                          console.log(err);
+                                        })
+                                })
+                                .catch( function(err){
+                                  console.log(err);
+                                })
+                          }
+
+
+                          that._trace.list_obsels(that._trace.attributes.traceBegin, that._trace.attributes.traceEnd)
+                              .then( function(obselList){
+                                console.log( obselList );
+                                that._tlm.updateUpperTrace(that._trace.attributes.traceBegin, that._trace.attributes.traceEnd, obselList );
+                              })
+                              .catch( function(err){
+                                console.log(err);
+                              });
+
+                        })
+                        .catch( function(err){
+                          console.log(err);
+                        })
+
+                        */
+
+        }
+
+
+      }
+
+    });
+  </script>
+</dom-module>

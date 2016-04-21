@@ -1,0 +1,91 @@
+<dom-module id="taaabs-trace-timeline-stylesheet">
+
+  <template>
+
+    <style>
+      :host #textEditor{
+        width: 400px;
+        height: 600px;
+        font-family: monospace;
+      }
+    </style>
+
+
+    <textarea id="textEditor" value="[[styleSheet]]"></textarea>
+
+    <div class="button" on-click="_applyStyle"> APPLY </div>
+
+  </template>
+
+
+
+  <script>
+
+    Polymer({
+      is: 'taaabs-trace-timeline-stylesheet',
+      properties: {
+
+        styleSheet: {
+          type: String,
+          notify: true,
+          value: "#DEFAULT_GLOBAL_SYMBOL {\n  color: #21b2a6,\n  shape: DIAMOND\n}"
+        },
+
+        /**
+        * Localization object.
+        *
+        * @attribute i18n
+        * @type Object
+        */
+		    i18n: {
+            type: Object,
+            value: {
+
+            },
+            notify: true
+        },
+
+        /**
+        * Localization.
+        * fr, en.
+        *
+        * @attribute language
+        * @type String
+        */
+        language: {
+            type: String,
+            notify: true,
+            observer: "_languageChanged"
+        },
+
+      },
+
+
+	  listeners:{
+      'textEditor.input':'_textEditorInput'
+	  },
+
+
+      _languageChanged: function(){
+        for(var prop in this.i18n) {
+          var tmp = "i18n."+prop+".default";
+          this.set(tmp, this.i18n[prop][this.language]);
+        }
+      },
+
+      ready: function(){
+
+
+      },
+
+      _applyStyle: function(){
+        this.styleSheet = this.$.textEditor.value;
+      },
+
+      _textEditorInput: function(){
+        console.log(this.$.textEditor.value);
+      }
+
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,675 @@
+<!-- <link rel="import" href="../taaabs-dark-theme.html"> -->
+
+<dom-module id="taaabs-base-details">
+
+
+  <template>
+    <!-- <style include="taaabs-dark-theme"></style> -->
+    <style>
+      :host {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      table{
+        width: 100%;
+      }
+
+      th{
+        text-align:left;
+      }
+
+      dt{
+        font-weight: bold;
+      }
+
+      #modes{
+        display: block;
+        width: 100%;
+      }
+
+      #visuMode{
+        display: block;
+        float:left;
+        width: 100%;
+        opacity: 1;
+        -webkit-transition: opacity .3s ease-in-out;
+        -moz-transition: opacity .3s ease-in-out;
+        -ms-transition: opacity .3s ease-in-out;
+        -o-transition: opacity .3s ease-in-out;
+        transition: opacity .3s ease-in-out;
+      }
+
+      #editMode{
+        display: block;
+        float: left;
+        width : 100%;
+        margin-left: -100%;
+        opacity: 0;
+        pointer-events: none;
+        -webkit-transition: opacity .3s ease-in-out;
+        -moz-transition: opacity .3s ease-in-out;
+        -ms-transition: opacity .3s ease-in-out;
+        -o-transition: opacity .3s ease-in-out;
+        transition: opacity .3s ease-in-out;
+      }
+
+      .editIcons{
+        float:right;
+        opacity: 0.87;
+        cursor: pointer;
+      }
+
+      .editIcons:hover{
+        opacity: 1;
+      }
+
+      #editSubmitIcon{
+        color: #87D37C;
+      }
+
+      #editCancelIcon{
+        color: #ef5e4a;
+      }
+
+      .baseLine:hover{
+        cursor: pointer;
+        background-color: #2e3842;
+        color: white;
+      }
+
+    </style>
+
+    <h3> <span>{{i18n.baseInformations.default}} : <span>{{_base.id}}</span> </h3>
+
+    <div id="modes">
+      <div id="visuMode">
+
+        <iron-icon icon="icons:create" title="{{i18n.editIcon.default}}" class="editIcons" id="editIcon"></iron-icon>
+        <dl>
+          <dt> Url </dt>
+          <dd> <a href="{{_base.uri}}" target="_blank"><span>{{_base.uri}}</span></a></dd>
+          <dt> Label </dt>
+          <dd> <span>{{_base.label}}</span></dd>
+          <dt> Description </dt>
+          <dd> <span>{{_base.note}}</span></dd>
+        </dl>
+
+      </div>
+
+      <div id="editMode">
+
+        <iron-icon icon="icons:close" class="editIcons" title="{{i18n.editCancelIcon.default}}" id="editCancelIcon"></iron-icon>
+        <iron-icon icon="icons:check" class="editIcons" title="{{i18n.editSubmitIcon.default}}" id="editSubmitIcon"></iron-icon>
+        <dl>
+          <dt> Url </dt>
+          <dd> <a href="{{_base.uri}}" target="_blank"><span>{{_base.uri}}</span></a></dd>
+          <dt> Label </dt>
+          <dd> <input type="text" value="{{_baseLabel::input}}"></dd>
+          <dt> Description </dt>
+          <dd> <textarea value="{{_baseNote::input}}"></textarea></dd>
+        </dl>
+      </div>
+    </div>
+
+
+    <h4> <span>{{i18n.storedTraces.default}} </span> </h4>
+
+    <table>
+      <tr>
+        <th> Id </th><th> Label </th><th> Notes </th>
+      </tr>
+      <template is="dom-repeat" items="{{_traces}}">
+        <tr resid="{{item.uri}}" on-click="_traceClicked" class="baseLine">
+          <td> <span>{{item.id}}</span> </td>
+          <td> <span>{{item.label}}</span> </td>
+          <td> <span>{{item.note}}</span> </td>
+        </tr>
+      </template>
+    </table>
+
+    <h4> <span>{{i18n.transformedTraces.default}} </span> </h4>
+
+
+
+    <table>
+      <tr>
+        <th> Id </th><th> Label </th><th> Notes </th>
+      </tr>
+      <template is="dom-repeat" items="{{_tTraces}}">
+        <tr resid="{{item.id}}" on-click="_tTraceClicked" class="baseLine">
+          <td> <span>{{item.id}}</span> </td>
+          <td> <span>{{item.label}}</span> </td>
+          <td> <span>{{item.note}}</span> </td>
+        </tr>
+      </template>
+    </table>
+
+    <h4> <span>{{i18n.models.default}} </span> </h4>
+
+    <table>
+      <tr>
+        <th> Id </th><th> Label </th><th> Notes </th>
+      </tr>
+      <template is="dom-repeat" items="{{_models}}">
+        <tr resid="{{item.id}}" on-click="_modelClicked" class="baseLine">
+          <td> <span>{{item.id}}</span> </td>
+          <td> <span>{{item.label}}</span> </td>
+          <td> <span>{{item.note}}</span> </td>
+        </tr>
+      </template>
+    </table>
+
+  </template>
+
+  <script>
+
+    Polymer({
+      is: 'taaabs-base-details',
+
+      /**
+       * Fired if a resource has been clicked.
+       *
+       * Returns an object :
+       *
+       *    {
+       *      "resourceURL":<url_of_the_resource>,
+       *      "resourceType":"StoredTrace" || "ComputedTrace" || "TraceModel",
+       *      "which": <mouse_button>
+       *    }
+       *
+       * If mouse_button = 2, then it's a middle-click
+       * @event resourceSelected
+       */
+
+
+      properties: {
+
+        /**
+        * The base URL.
+        *
+        * @attribute baseUrl
+        * @type String
+        */
+        baseUrl: {
+          type: String,
+          notify: true,
+          value: "",
+		      observer: '_baseURLchanged'
+        },
+
+        /**
+        * The base label.
+        *
+        * @attribute _baseLabel
+        * @type String
+        */
+        _baseLabel: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+
+        /**
+        * The base notes.
+        *
+        * @attribute _baseNote
+        * @type String
+        */
+        _baseNote: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+
+        /**
+        * The base object.
+        *
+        * @attribute _base
+        * @type Object
+        */
+        _base: {
+          type: Object,
+          notify: true,
+          value: function(){
+            return {};
+          }
+        },
+
+        /**
+        * The stored traces of the base.
+        *
+        * @attribute _traces
+        * @type Array
+        */
+        _traces: {
+          type: Array,
+          notify: true,
+          value: function(){
+            return [];
+          }
+        },
+
+        /**
+        * The computed traces of the base.
+        *
+        * @attribute _tTraces
+        * @type Array
+        */
+        _tTraces: {
+          type: Array,
+          notify: true,
+          value: function(){
+            return [];
+          }
+        },
+
+        /**
+        * The models of the base.
+        *
+        * @attribute _models
+        * @type Array
+        */
+        _models: {
+          type: Array,
+          notify: true,
+          value: function(){
+            return [];
+          }
+        },
+
+        /**
+        * Localization object.
+        *
+        * @attribute i18n
+        * @type Object
+        */
+		    i18n: {
+            type: Object,
+            value: {
+				      "baseInformations" :{
+                "default": "Base details",
+                "en": "Base details",
+                "fr": "Informations sur la base"
+              },
+              "storedTraces" :{
+                "default": "Stored traces",
+                "en": "Stored traces",
+                "fr": "Traces primaires"
+              },
+              "transformedTraces" :{
+                "default": "Transformed traces",
+                "en": "Transformed traces",
+                "fr": "Traces transformées"
+              },
+              "models" :{
+                "default": "Models",
+                "en": "Models",
+                "fr": "Modèles"
+              },
+              "editIcon": {
+                "default": "Edit",
+                "en": "Edit",
+                "fr": "Éditer"
+              },
+              "editCancelIcon": {
+                "default": "Cancel",
+                "en": "Cancel",
+                "fr": "Annuler"
+              },
+              "editSubmitIcon": {
+                "default": "Submit",
+                "en": "Submit",
+                "fr": "Valider"
+              }
+            },
+            notify: true
+        },
+
+        /**
+        * Localization.
+        * fr, en.
+        *
+        * @attribute language
+        * @type String
+        */
+        language: {
+            type: String,
+            notify: true,
+            observer: "_languageChanged"
+        },
+
+      },
+
+
+        listeners:{
+          'loadResource': '_loadResource',
+          'editIcon.click': '_switchToEditMode',
+          'editCancelIcon.click': '_switchToNotEditMode',
+          'editSubmitIcon.click': '_submitBaseChanges'
+        },
+
+
+      _languageChanged: function(){
+        for(var prop in this.i18n) {
+          var tmp = "i18n."+prop+".default";
+          this.set(tmp, this.i18n[prop][this.language]);
+        }
+      },
+
+      ready: function(){
+
+      },
+
+      /**
+      * Triggered when a computed trace is clicked.
+      * Fires `resourceSelected`.
+      *
+      * @param {!required} e The click event
+      *
+      * @method _tTraceClicked
+      */
+      _tTraceClicked: function(e){
+        var tr = e.target;
+        while(tr.localName !== 'tr')
+          tr = tr.parentNode;
+        var obj = {
+          "resourceURL": tr.resid,
+          "resourceType": "ComputedTrace",
+          "which":e.which
+        }
+        this.fire('resourceSelected', obj)
+      },
+
+      /**
+      * Triggered when a trace model is clicked.
+      * Fires `resourceSelected`.
+      *
+      * @param {!required} e The click event
+      *
+      * @method _modelClicked
+      */
+      _modelClicked: function(e){
+        var tr = e.target;
+        while(tr.localName !== 'tr')
+          tr = tr.parentNode;
+        var obj = {
+          "resourceURL": tr.resid,
+          "resourceType": "TraceModel",
+          "which":e.which
+        }
+        this.fire('resourceSelected', obj)
+      },
+
+      /**
+      * Triggered when a stored trace is clicked.
+      * Fires `resourceSelected`.
+      *
+      * @param {!required} e The click event
+      *
+      * @method _traceClicked
+      */
+      _traceClicked: function(e){
+        var tr = e.target;
+        while(tr.localName !== 'tr')
+          tr = tr.parentNode;
+        var obj = {
+          "resourceURL": tr.resid,
+          "resourceType": "StoredTrace",
+          "which":e.which
+        }
+        console.log(obj);
+        this.fire('resourceSelected', obj)
+      },
+
+      /**
+      * Change some css to display the edit panel
+      *
+      * @method _switchToEditMode
+      */
+      _switchToEditMode: function(){
+        this.$.visuMode.style.opacity = 0;
+        this.$.visuMode.style.pointerEvents = 'none';
+        this.$.editMode.style.opacity = 1;
+        this.$.editMode.style.pointerEvents = 'auto';
+      },
+
+      /**
+      * Change some css to hide the edit panel
+      *
+      * @method _switchToNotEditMode
+      */
+      _switchToNotEditMode: function(){
+        this.$.visuMode.style.opacity = 1;
+        this.$.visuMode.style.pointerEvents = 'auto';
+        this.$.editMode.style.opacity = 0;
+        this.$.editMode.style.pointerEvents = 'none';
+      },
+
+      /**
+      * PUT the new base params (label and notes).
+      *
+      * @method _submitBaseChanges
+      */
+      _submitBaseChanges: function(){
+
+        var that = this;
+
+        var obj = [
+          ["label", this._baseLabel],
+          ["http://www.w3.org/2004/02/skos/core#note", this._baseNote],
+          ["inRoot","../"]
+        ];
+        this._base.modify_attributes( obj ).then( function(response){
+
+            that.set('_base.label', that._base['label']);
+            that.set('_baseLabel', that._base['label']);
+
+            that.set('_base.note', that._base['http://www.w3.org/2004/02/skos/core#note']);
+            that.set('_baseNote', that._base['http://www.w3.org/2004/02/skos/core#note']);
+
+            that._switchToNotEditMode();
+
+          })
+          .catch( function(err){
+            console.log(err);
+          });
+      },
+
+      /**
+      * Triggered when `baseUrl` changes.
+      *
+      * @method _baseURLchanged
+      */
+      _baseURLchanged: function(){
+
+        this.set('_base', new Samotraces.Ktbs.Base(this.baseUrl));
+        this.set('_traces',[]);
+        this.set('_tTraces',[]);
+        this.set('_models',[]);
+
+        var that = this;
+
+      },
+
+      /**
+      * Load every resource of the base.
+      *
+      * @method refresh
+      */
+      refresh: function(){
+        var that = this;
+        this._base.load()
+            .then( function(){
+              var id = that._base.uri.split('/');
+              id = id[id.length - 2];
+
+              that.set('_base.id', id);
+
+              that.set('_base.label', that._base['label']);
+              that.set('_baseLabel', that._base['label']);
+
+              that.set('_base.note', that._base['http://www.w3.org/2004/02/skos/core#note']);
+              that.set('_baseNote', that._base['http://www.w3.org/2004/02/skos/core#note']);
+
+              that._base.iter_stored_traces()
+                        .forEach( function( trace ){
+                          trace.load()
+                               .then( function(){
+                                trace.id = trace.id.split('/');
+                                trace.id = trace.id[ trace.id.length - 2 ];
+                                trace.note = trace['http://www.w3.org/2004/02/skos/core#note'];
+                                that.push('_traces', trace);
+                               })
+                               .catch( function(err){
+                                console.log(err);
+                               })
+
+                        })
+                        .then( function(){
+
+                        })
+                        .catch( function(err){
+                          console.log(err);
+                        })
+              that._base.iter_computed_traces()
+                        .forEach( function( trace ){
+                          trace.load()
+                               .then( function(){
+                                trace.id = trace.id.split('/');
+                                trace.id = trace.id[ trace.id.length - 2 ];
+                                trace.note = trace['http://www.w3.org/2004/02/skos/core#note'];
+                                that.push('_tTraces', trace);
+                               })
+                               .catch( function(err){
+                                console.log(err);
+                               })
+
+                        })
+                        .then( function(){
+
+                        })
+                        .catch( function(err){
+                          console.log(err);
+                        })
+              that._base.iter_models()
+                        .forEach( function( model ){
+                          model.load()
+                               .then( function(){
+                                console.log(model);
+                                model.id = model.id.split('/');
+                                if( model.id[ model.id.length -1 ] !== "")
+                                  model.id = model.id[ model.id.length - 1 ];
+                                else
+                                  model.id = model.id[ model.id.length - 2 ];
+                                model.note = model['http://www.w3.org/2004/02/skos/core#note'];
+                                that.push('_models', model);
+                               })
+                               .catch( function(err){
+                                console.log(err);
+                               })
+
+                        })
+                        .then( function(){
+
+                        })
+                        .catch( function(err){
+                          console.log(err);
+                        })
+
+            })
+            .catch( function(err){
+              console.log(err);
+            })
+
+      },
+
+      /**
+      * Load the resources of the base.
+      *
+      * @param {!required} e An object containing some informations...
+      *
+      * @method _loadResource
+      */
+      _loadResource: function(e){
+
+        if(e.detail.index < e.detail.resources.length){
+          var resID =  e.detail.resources[e.detail.index]['@id'].split('/');
+          var res = undefined;
+
+          if( e.detail.resources[e.detail.index]['@type'] === "StoredTrace" ){
+            this._loadTrace(e, resID);
+          }
+          else if( e.detail.resources[e.detail.index]['@type'] === "TraceModel" ){
+            this._loadModel(e, resID);
+          }
+        }
+
+      },
+
+
+      _loadTrace: function(e, resID){
+
+        var that = this;
+
+        resID = resID[resID.length - 2] + '/';
+        var res = new Samotraces.Ktbs.Trace(this._base.uri+resID);
+
+        res.force_state_refresh({'_on_state_refresh_': true}, function(resource) {
+
+          res = that._getResourceDatas(res, resource);
+
+          that.push('_traces', res);
+
+          e.detail.index = e.detail.index + 1
+          that.fire('loadResource',e.detail);
+
+        }, function (error) {
+          console.log('This base doesn\'t exists.');
+          console.log(error);
+        });
+      },
+
+      _loadModel: function(e, resID){
+
+        var that = this;
+
+        resID = resID[resID.length - 1];
+        var res = new Samotraces.Ktbs.Model(this._base.uri+resID);
+
+        res.force_state_refresh({'_on_state_refresh_': true}, function(resource) {
+
+          var graph = resource['@graph'];
+          var i = 0;
+          while(graph[i]['@type'] !== "TraceModel" && i < graph.length){
+            i++;
+          }
+
+          res = that._getResourceDatas(res, graph[i]);
+
+          that.push('_models', res);
+
+          e.detail.index = e.detail.index + 1
+          that.fire('loadResource',e.detail);
+
+        }, function (error) {
+          console.log('This base doesn\'t exists.');
+          console.log(error);
+        });
+      },
+
+      _getResourceDatas: function(res, resource){
+
+        var id = res.uri.split('/');
+        id = id[id.length - 2];
+        res.id = id;
+        res.label = resource.label;
+        res.note = resource['http://www.w3.org/2004/02/skos/core#note'];
+
+        return res;
+      }
+
+    });
+  </script>
+</dom-module>

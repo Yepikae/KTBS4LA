@@ -1,0 +1,97 @@
+<dom-module id="taaabs-spare">
+
+  <script type="text/javascript" src="parser.js"></script>
+  <script type="text/javascript" src="ftmXhyxZ.js"></script>
+  <template>
+    <style>
+
+        #choiceTable > div > div{
+            border: solid 1px grey;
+            padding:5px;
+            vertical-align: middle;
+            font-size: 12px;
+            width: 20%;
+        }
+
+    </style>
+
+    <textarea style="display: block; margin: 0 auto; width: 1000px" id='requestTextArea'></textarea> 
+    <pre style="display: block; margin: 0 auto; max-width: 1000px; width: 1000px" id='requestResultDiv'></pre> 
+    <div style="margin: 0 auto; width: 1000px;">
+        <iframe id="yasgui" src="yasgui.html" style="height: 2000px; width: 1000px;">
+          <p>Votre navigateur ne supporte pas l'élément iframe</p>
+        </iframe>
+    </div>
+  </template>
+
+
+<script>
+
+Polymer({
+    
+    is: 'taaabs-spare',
+    
+    properties: {
+        
+        /**
+         * The current route
+         */
+        language: {
+            type: String,
+            notify: true,
+            observer: "_languageChanged"
+        },
+        
+        
+        i18n: {
+            type: String,
+            value: {
+                "home":{
+                    "default":"Home",
+                    "en":"Home",
+                    "fr":"Accueil"
+                },
+                "hello":{
+                    "default":"Hello",
+                    "en":"Hello",
+                    "fr":"Bonjour"
+                }
+            },
+            notify: true
+        }
+
+    },
+
+    listeners: {
+        'requestTextArea.keyup' : '_requestTextAreaKeyUp'
+    },
+
+    ready: function(){
+        parserCLN.trace_modelURI = "https://liris-ktbs01.insa-lyon.fr:8000/hubble/baseTestRemi/_M0";
+    },
+    
+    _languageChanged: function(){
+        for(var prop in this.i18n) {
+            var tmp = "i18n."+prop+".default";
+            this.set(tmp, this.i18n[prop][this.language]);
+        }
+    },
+
+    _requestTextAreaKeyUp: function(e){
+        e.preventDefault();
+        try {
+           var result = parserCLN.parse(this.$.requestTextArea.value);
+           this.$.requestResultDiv.textContent = parser.parse(result);
+
+           this.$.yasgui.src = 'elements/taaabs-spare/yasgui.html#{"traceURL":"https://liris-ktbs01.insa-lyon.fr:8000/hubble/baseTestRemi/t1/@obsels","request":"'+ encodeURI(parser.parse(result))+'"}';
+
+        }
+        catch (e) {
+           this.$.requestResultDiv.textContent = e;
+        }
+    },
+
+});
+</script>
+
+</dom-module>

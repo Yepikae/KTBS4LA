@@ -1,0 +1,256 @@
+<!-- CSS STYLE, We may find another way to do this -->
+<link rel="import" href="../taaabs-dark-theme.html">
+
+<dom-module id="taaabs-base-overview">
+  <template>
+  <!-- include the style module by name -->
+  <style include="taaabs-dark-theme"></style>
+
+  <style>
+    :host {
+      display: block;
+    }
+
+    .viewBtn {
+      margin: 0 auto;
+      border-radius: 100%;
+      height: 10px;
+      width: 10px;
+      background-color: lawngreen;
+      opacity: 0.6;
+    }
+
+    .viewBtn:hover {
+      box-shadow: 0 0 0.2em grey;
+    }
+
+    .baseLine{
+      cursor:pointer;
+    }
+
+    th{
+     text-align: left;
+    }
+
+  </style>
+
+  <div>
+
+    <center>
+      <h2> <span> {{i18n.title.default}} </span> </h2>
+    </center>
+    <table style="width:100%">
+      <thead>
+        <tr>
+          <th> ID </th><th> Label </th><th> Notes </th>
+        </tr>
+      </thead>
+      <tbody>
+        <template is="dom-repeat" items="{{bases}}" sort="_sort">
+          <tr id="{{item.id}}" on-click="_baseClicked" class="baseLine">
+            <td> <span>{{item.idName}}</span> </td>
+            <td> <span>{{item.label}}</span> </td>
+            <td> <span>{{item.note}}</span> </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+
+  </div>
+  </template>
+
+  <script>
+
+    Polymer({
+      is: 'taaabs-base-overview',
+
+      /**
+       * Fired if a base has been selected.
+       *
+       * Returns an object :
+       *
+       *    {
+       *      "baseId": <url_of_the_base>,
+       *      "which": <mouse_button>
+       *    }
+       *
+       * If mouse_button = 2, then it's a middle-click
+       *
+       * @event baseSelected
+       */
+
+      properties: {
+        /**
+        * Url of the current kTBS.
+        *
+        * @attribute ktbsUrl
+        * @type String
+        */
+        ktbsUrl: {
+          type: String,
+          notify: true,
+          value: "",
+          observer: "_ktbsUrlChanged"
+        },
+
+        /**
+        * A Samotrace.kTBS object.
+        *
+        * @attribute _ktbs
+        * @type Object
+        */
+        _ktbs: {
+          type: Object,
+          notify: true,
+          value: function(){
+            return {};
+         }
+        },
+
+        /**
+        * The different existing bases on the ktbs.
+        *
+        * @attribute bases
+        * @type Array
+        */
+        bases: {
+          type: Array,
+          notify: true,
+          value: function(){
+            return [];
+          }
+        },
+
+        /**
+        * Localization object.
+        *
+        * @attribute i18n
+        * @type Object
+        */
+		    i18n: {
+            type: Object,
+            value: {
+                "title":{
+                    "default":"Pick a project",
+                    "en":"Pick a project",
+                    "fr":"Selectionnez votre projet"
+                }
+            },
+            notify: true
+        },
+
+        /**
+        * Internationalization.
+        * fr, en.
+        *
+        * @attribute language
+        * @type String
+        */
+        language: {
+            type: String,
+            notify: true,
+            observer: "_languageChanged"
+        },
+
+      },
+
+
+      listeners:{
+        'loadBase': '_loadBase',
+      },
+
+
+      _languageChanged: function(){
+        for(var prop in this.i18n) {
+          var tmp = "i18n."+prop+".default";
+          this.set(tmp, this.i18n[prop][this.language]);
+        }
+      },
+
+      ready: function(){
+
+      },
+
+      /**
+      * Triggered when `ktbsUrl` changes.
+      * Get each base of the ktbs object.
+      *
+      * @method _ktbsUrlChanged
+      */
+      _ktbsUrlChanged: function(){
+
+        // We check if ktbsUrl isn't empty ( setting ktbsUrl to "" triggers a change).
+        if( this.ktbsUrl !== "" ){
+
+          // We set `_ktbs` as a ktbs object.
+          this.set('_ktbs', new Samotraces.Ktbs.Ktbs( this.ktbsUrl ) );
+
+          var that = this;
+
+          // We load the ktbs in order to retrieve the bases.
+          this._ktbs.load()
+              .then( function(){
+                that._ktbs.iter_bases()
+                          .forEach( function( base ){
+
+                              // We get the short ID of each base.
+                              base.idName = base.id.split('/');
+                              base.idName = base.idName[ base.idName.length - 2 ];
+
+                              // We load each base to retrieve it's label and note.
+                              base.load()
+                                .then(function(){
+                                  base.note = base['http://www.w3.org/2004/02/skos/core#note'];
+                                  that.push('bases',base);
+                                })
+                                .catch( function(err){
+
+                                })
+                          })
+                          .then( function(){
+
+                          })
+                          .catch( function(err){
+                            console.log(err);
+                          })
+              })
+              .catch( function(err){
+                console.log(err);
+              })
+        }
+
+      },
+
+      /**
+      * Triggered when a <tr> of a base is clicked.
+      * Fires `baseSelected`.
+      *
+      * @method _baseClicked
+      */
+      _baseClicked: function(e){
+
+        // We get the parent <tr> element of the actual element clicked
+        var tr = e.target;
+        while(tr.localName !== 'tr')
+          tr = tr.parentNode;
+
+        this.fire('baseSelected',{"baseId":tr.id,"which":e.which});
+
+      },
+
+      /**
+      * Sort two elements in alphabetic order.
+      *
+      * @method _sort
+      */
+      _sort: function(a, b) {
+        if (a.idName.toLowerCase() < b.idName.toLowerCase())
+          return -1;
+        else if (a.idName.toLowerCase() > b.idName.toLowerCase())
+          return 1;
+        else
+          return 0;
+      }
+    });
+  </script>
+</dom-module>

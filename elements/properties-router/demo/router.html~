@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Components with state demo</title>
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <link rel="import" href="../test-router-app.html">
+  </head>
+  <body>
+
+    <p>Component with composite state</p>
+
+    <test-router-app></test-router-app>
+
+  </body>
+</html>

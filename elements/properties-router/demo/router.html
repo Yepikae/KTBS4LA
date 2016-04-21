@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Components with state demo</title>
+    <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+    <link rel="import" href="../test-router-app.html">
+  </head>
+  <body>
+
+    <h1>Demo for &lt;properties-router&gt;</h1>
+    <p>Current location.hash: <input id="locationHash" style="width:100%"></p>
+
+    <test-router-app></test-router-app>
+
+    <script>
+        function updateLocationHash() {
+	    document.getElementById("locationHash").value = location.hash;
+        }
+        window.addEventListener("hashchange", updateLocationHash, false);
+        window.addEventListener("load", function(evt) {
+	    updateLocationHash();
+	    document.getElementById("locationHash").addEventListener("change", function(evt) {
+	        location.hash = evt.target.value;
+	    }, false);
+	}, false);
+    </script>
+  </body>
+</html>
