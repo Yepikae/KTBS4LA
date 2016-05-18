@@ -223,7 +223,7 @@
       if (app.route.route === "base-details") {
         // We set the href url of the menu button 'csv collector'.
         var ccl = document.getElementById('_csvCollectorLink');
-        ccl.href = '/#{"route":"csv-collector","resource":"' + app.route.resource + '"}';
+        ccl.href = '#{"route":"csv-collector","resource":"' + app.route.resource + '"}';
         // We refresh the taaabs-base-details and taaabs-ktbs-overview ( for the base graph ).
         var tbg = document.getElementById('tbg');
         if (tbg)
@@ -269,7 +269,7 @@
           location.hash = '{"route":"trace-details","resource":"' + e.detail.resourceURL + '"}';
           app.resource = e.detail.resourceURL;
         } else {
-          window.open("/#" + '{"route":"trace-details","resource":"' + e.detail.resourceURL + '"}');
+          window.open("#" + '{"route":"trace-details","resource":"' + e.detail.resourceURL + '"}');
         }
       }
     }
@@ -281,7 +281,7 @@
         location.hash = '{"route":"base-details","resource":"' + e.detail.baseURL + '"}';
         app.resource = e.detail.baseURL;
       } else {
-        window.open("/#" + '{"route":"base-details","resource":"' + e.detail.baseURL + '"}');
+        window.open("#" + '{"route":"base-details","resource":"' + e.detail.baseURL + '"}');
       }
     }
 
@@ -292,7 +292,7 @@
         location.hash = '{"route":"base-details","resource":"' + e.detail.baseId + '"}';
         app.resource = app.ktbsUrl + e.detail.baseId;
       } else {
-        window.open("/#" + '{"route":"base-details","resource":"' + e.detail.baseId + '"}');
+        window.open("#" + '{"route":"base-details","resource":"' + e.detail.baseId + '"}');
       }
     }
 
