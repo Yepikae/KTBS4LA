@@ -44,6 +44,8 @@
 
       refresh: function( query ) {
 
+        console.log(query);
+
         var query = query || this._query;
         this._yasqe.setValue( query );
         this._yasqe.query( this._drawResponse )
@@ -51,6 +53,8 @@
       },
 
       _drawResponse: function( response ){
+
+        console.log( response );
 
         var response = response || this._response;
 
