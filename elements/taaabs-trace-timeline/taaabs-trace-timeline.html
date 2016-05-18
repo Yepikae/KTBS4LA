@@ -1,11 +1,20 @@
+
+
+
 <script src="pixi.min.js"></script>
 <script src="script.js"></script>
+
 <link rel="import" href="taaabs-trace-timeline-visu.html">
 <link rel="import" href="taaabs-trace-timeline-timeline.html">
 
 <link rel="import" href="taaabs-trace-timeline-icons.html">
 
+
 <dom-module id="taaabs-trace-timeline">
+
+
+
+  <template>
 
   <style>
     :host {
@@ -39,8 +48,6 @@
     }
 
   </style>
-
-  <template>
 
 
     <taaabs-trace-timeline-visu id="tttv"
@@ -328,7 +335,7 @@
 
 	  listeners:{
       'getObsels': '_getObsels',
-      'byTypeCheckbox.click': '_byTypeCheckboxClicked'
+    /*  'byTypeCheckbox.click': '_byTypeCheckboxClicked' */
 	  },
 
 

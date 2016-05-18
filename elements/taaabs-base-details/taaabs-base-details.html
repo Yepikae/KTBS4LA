@@ -1,10 +1,9 @@
-<!-- <link rel="import" href="../taaabs-dark-theme.html"> -->
-
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
 <dom-module id="taaabs-base-details">
 
 
   <template>
-    <!-- <style include="taaabs-dark-theme"></style> -->
+    <style include="taaabs-dark-theme"></style>
     <style>
       :host {
         display: block;
@@ -93,7 +92,7 @@
           <dt> Label </dt>
           <dd> <span>{{_base.label}}</span></dd>
           <dt> Description </dt>
-          <dd> <span>{{_base.note}}</span></dd>
+          <dd> <span>{{_base.comment}}</span></dd>
         </dl>
 
       </div>
@@ -108,7 +107,7 @@
           <dt> Label </dt>
           <dd> <input type="text" value="{{_baseLabel::input}}"></dd>
           <dt> Description </dt>
-          <dd> <textarea value="{{_baseNote::input}}"></textarea></dd>
+          <dd> <textarea value="{{_baseComment::input}}"></textarea></dd>
         </dl>
       </div>
     </div>
@@ -124,7 +123,7 @@
         <tr resid="{{item.uri}}" on-click="_traceClicked" class="baseLine">
           <td> <span>{{item.id}}</span> </td>
           <td> <span>{{item.label}}</span> </td>
-          <td> <span>{{item.note}}</span> </td>
+          <td> <span>{{item.comment}}</span> </td>
         </tr>
       </template>
     </table>
@@ -141,7 +140,7 @@
         <tr resid="{{item.id}}" on-click="_tTraceClicked" class="baseLine">
           <td> <span>{{item.id}}</span> </td>
           <td> <span>{{item.label}}</span> </td>
-          <td> <span>{{item.note}}</span> </td>
+          <td> <span>{{item.comment}}</span> </td>
         </tr>
       </template>
     </table>
@@ -156,7 +155,7 @@
         <tr resid="{{item.id}}" on-click="_modelClicked" class="baseLine">
           <td> <span>{{item.id}}</span> </td>
           <td> <span>{{item.label}}</span> </td>
-          <td> <span>{{item.note}}</span> </td>
+          <td> <span>{{item.comment}}</span> </td>
         </tr>
       </template>
     </table>
@@ -217,7 +216,7 @@
         * @attribute _baseNote
         * @type String
         */
-        _baseNote: {
+        _baseComment: {
           type: String,
           notify: true,
           value: ""
@@ -232,9 +231,16 @@
         _base: {
           type: Object,
           notify: true,
-          value: function(){
-            return {};
-          }
+          value: null,
+          observer: '_baseChanged'
+        },
+
+
+        _tmpResource: {
+          type: Object,
+          notify: true,
+          value: null,
+          observer: '_tmpResourceChanged'
         },
 
         /**
@@ -277,6 +283,12 @@
           value: function(){
             return [];
           }
+        },
+
+        taaabsCentralLoading: {
+          type: Boolean,
+          notify: true,
+          value: false
         },
 
         /**
@@ -458,16 +470,15 @@
 
         var obj = [
           ["label", this._baseLabel],
-          ["http://www.w3.org/2004/02/skos/core#note", this._baseNote],
-          ["inRoot","../"]
+          ["rdfs:comment", this._baseComment]
         ];
         this._base.modify_attributes( obj ).then( function(response){
 
             that.set('_base.label', that._base['label']);
             that.set('_baseLabel', that._base['label']);
 
-            that.set('_base.note', that._base['http://www.w3.org/2004/02/skos/core#note']);
-            that.set('_baseNote', that._base['http://www.w3.org/2004/02/skos/core#note']);
+            that.set('_base.comment', that._base['comment']);
+            that.set('_baseComment', that._base['comment']);
 
             that._switchToNotEditMode();
 
@@ -483,14 +494,69 @@
       * @method _baseURLchanged
       */
       _baseURLchanged: function(){
-
-        this.set('_base', new Samotraces.Ktbs.Base(this.baseUrl));
         this.set('_traces',[]);
         this.set('_tTraces',[]);
         this.set('_models',[]);
-
         var that = this;
+      },
 
+      _tmpResourceChanged: function(){
+        if( this._tmpResource ){
+          var resource = this._tmpResource;
+          switch(resource['type']){
+            case 'StoredTrace':
+              resource.id = resource.id.split('/');
+              resource.id = resource.id[ resource.id.length - 2 ];
+              this.push('_traces', resource);
+            break;
+            case 'ComputedTrace':
+              resource.id = resource.id.split('/');
+              resource.id = resource.id[ resource.id.length - 2 ];
+              this.push('_tTraces', resource);
+            break;
+            case 'TraceModel':
+              resource.id = resource.id.split('/');
+              if( resource.id[ resource.id.length -1 ] !== "")
+                resource.id = resource.id[ resource.id.length - 1 ];
+              else
+                resource.id = resource.id[ resource.id.length - 2 ];
+              this.push('_models', resource);
+            break;
+          }
+        }
+      },
+
+      _baseChanged: function(){
+        if( this._base ){
+          var id = this._base.uri.split('/');
+          id = id[id.length - 2];
+
+          this.set('_base.id', id);
+
+          this.set('_base.label', this._base['label']);
+          this.set('_baseLabel', this._base['label']);
+
+          this.set('_base.comment', this._base['comment']);
+          this.set('_baseComment', this._base['comment']);
+
+          var that = this;
+
+          this._base.iter_stored_traces()
+              .forEach( function( trace ){
+                that.fire('GET_RESOURCE', {url:trace.uri, obj:"_tmpResource"});
+              })
+              .catch( function(err){ console.log(err); })
+          that._base.iter_computed_traces()
+              .forEach( function( trace ){
+                that.fire('GET_RESOURCE', {url:trace.uri, obj:"_tmpResource"});
+              })
+              .catch( function(err){ console.log(err); })
+          that._base.iter_models()
+              .forEach( function( model ){
+                that.fire('GET_RESOURCE', {url:model.uri, obj:"_tmpResource"});
+              })
+              .catch( function(err){ console.log(err); })
+        }
       },
 
       /**
@@ -499,90 +565,91 @@
       * @method refresh
       */
       refresh: function(){
-        var that = this;
-        this._base.load()
-            .then( function(){
-              var id = that._base.uri.split('/');
-              id = id[id.length - 2];
+        if( this.taaabsCentralLoading )
+          this.fire('GET_RESOURCE', {url:this.baseUrl, obj:"_base"});
+        else{
+          var that = this;
 
-              that.set('_base.id', id);
+          this._base.load()
+              .then( function(){
+                var id = that._base.uri.split('/');
+                id = id[id.length - 2];
 
-              that.set('_base.label', that._base['label']);
-              that.set('_baseLabel', that._base['label']);
+                that.set('_base.id', id);
 
-              that.set('_base.note', that._base['http://www.w3.org/2004/02/skos/core#note']);
-              that.set('_baseNote', that._base['http://www.w3.org/2004/02/skos/core#note']);
+                that.set('_base.label', that._base['label']);
+                that.set('_baseLabel', that._base['label']);
 
-              that._base.iter_stored_traces()
-                        .forEach( function( trace ){
-                          trace.load()
-                               .then( function(){
-                                trace.id = trace.id.split('/');
-                                trace.id = trace.id[ trace.id.length - 2 ];
-                                trace.note = trace['http://www.w3.org/2004/02/skos/core#note'];
-                                that.push('_traces', trace);
-                               })
-                               .catch( function(err){
-                                console.log(err);
-                               })
+                that.set('_base.comment', that._base['comment']);
+                that.set('_baseComment', that._base['comment']);
 
-                        })
-                        .then( function(){
+                that._base.iter_stored_traces()
+                          .forEach( function( trace ){
+                            trace.load()
+                                 .then( function(){
+                                  trace.id = trace.id.split('/');
+                                  trace.id = trace.id[ trace.id.length - 2 ];
+                                  that.push('_traces', trace);
+                                 })
+                                 .catch( function(err){
+                                  console.log(err);
+                                 })
 
-                        })
-                        .catch( function(err){
-                          console.log(err);
-                        })
-              that._base.iter_computed_traces()
-                        .forEach( function( trace ){
-                          trace.load()
-                               .then( function(){
-                                trace.id = trace.id.split('/');
-                                trace.id = trace.id[ trace.id.length - 2 ];
-                                trace.note = trace['http://www.w3.org/2004/02/skos/core#note'];
-                                that.push('_tTraces', trace);
-                               })
-                               .catch( function(err){
-                                console.log(err);
-                               })
+                          })
+                          .then( function(){
 
-                        })
-                        .then( function(){
+                          })
+                          .catch( function(err){
+                            console.log(err);
+                          })
+                that._base.iter_computed_traces()
+                          .forEach( function( trace ){
+                            trace.load()
+                                 .then( function(){
+                                  trace.id = trace.id.split('/');
+                                  trace.id = trace.id[ trace.id.length - 2 ];
+                                  that.push('_tTraces', trace);
+                                 })
+                                 .catch( function(err){
+                                  console.log(err);
+                                 })
 
-                        })
-                        .catch( function(err){
-                          console.log(err);
-                        })
-              that._base.iter_models()
-                        .forEach( function( model ){
-                          model.load()
-                               .then( function(){
-                                console.log(model);
-                                model.id = model.id.split('/');
-                                if( model.id[ model.id.length -1 ] !== "")
-                                  model.id = model.id[ model.id.length - 1 ];
-                                else
-                                  model.id = model.id[ model.id.length - 2 ];
-                                model.note = model['http://www.w3.org/2004/02/skos/core#note'];
-                                that.push('_models', model);
-                               })
-                               .catch( function(err){
-                                console.log(err);
-                               })
+                          })
+                          .then( function(){
 
-                        })
-                        .then( function(){
+                          })
+                          .catch( function(err){
+                            console.log(err);
+                          })
+                that._base.iter_models()
+                          .forEach( function( model ){
+                            model.load()
+                                 .then( function(){
+                                  console.log(model);
+                                  model.id = model.id.split('/');
+                                  if( model.id[ model.id.length -1 ] !== "")
+                                    model.id = model.id[ model.id.length - 1 ];
+                                  else
+                                    model.id = model.id[ model.id.length - 2 ];
+                                  that.push('_models', model);
+                                 })
+                                 .catch( function(err){
+                                  console.log(err);
+                                 })
 
-                        })
-                        .catch( function(err){
-                          console.log(err);
-                        })
+                          })
+                          .then( function(){
 
-            })
-            .catch( function(err){
-              console.log(err);
-            })
+                          })
+                          .catch( function(err){
+                            console.log(err);
+                          })
 
+              })
+              .catch( function(err){
+                console.log(err);
+              })
+        }
       },
 
       /**
@@ -665,7 +732,7 @@
         id = id[id.length - 2];
         res.id = id;
         res.label = resource.label;
-        res.note = resource['http://www.w3.org/2004/02/skos/core#note'];
+        res.comment = resource['comment'];
 
         return res;
       }

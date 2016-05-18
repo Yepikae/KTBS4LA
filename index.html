@@ -1,371 +1,385 @@
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="bower_components/webcomponentsjs/webcomponents-lite.js"></script>
 
-    <!-- INIT POLYMER -->
-    <script>
-      window.Polymer = window.Polymer || {};
-      window.Polymer.dom = 'shadow';
-    </script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="bower_components/webcomponentsjs/webcomponents-lite.js"></script>
 
-    <!-- import a component that relies on Polymer -->
-    <link rel="import" href="bower_components/polymer/polymer.html">
-    <link rel="import" href="elements/elements.html">
+  <!-- INIT POLYMER -->
+  <script>
+    window.Polymer = window.Polymer || {};
+    window.Polymer.dom = 'shadow';
+  </script>
 
-    <!-- http://html5up.net/ CSS -->
-    <link rel="stylesheet" href="assets/css/main.css" />
+  <!-- import a component that relies on Polymer -->
+  <link rel="import" href="bower_components/polymer/polymer.html">
+  <link rel="import" href="elements/elements.html">
 
-    <!-- Moar css -->
-    <style>
+  <!-- http://html5up.net/ CSS -->
+  <link rel="stylesheet" href="assets/css/main.css" />
 
-      /* *************************** */
-      /* TRACE DETAILS SECTION LINKS */
-      /* *************************** */
+  <!-- Moar css -->
+  <style>
+    /* *************************** */
+    /* TRACE DETAILS SECTION LINKS */
+    /* *************************** */
 
-      a.toolLink {
-        border: none;
-      }
+    a.toolLink {
+      border: none;
+    }
 
-      a.toolLink > div{
-        display: table;
-        opacity: 0.87;
-        float: left;
-        padding-left: 10px;
-        padding-right: 10px;
-        border-bottom: solid 1px #1e1e1e;
-      }
+    a.toolLink > div {
+      display: table;
+      opacity: 0.87;
+      float: left;
+      padding-left: 10px;
+      padding-right: 10px;
+      border-bottom: solid 1px #1e1e1e;
+    }
 
-      a.toolLink > div:hover{
-        opacity: 1;
-        border-bottom: solid 1px white;
-      }
+    a.toolLink > div:hover {
+      opacity: 1;
+      border-bottom: solid 1px white;
+    }
 
-      a.toolLink > div > div{
-        display: table-row;
-        text-align: center;
-        font-size: 10px;
-      }
+    a.toolLink > div > div {
+      display: table-row;
+      text-align: center;
+      font-size: 10px;
+    }
+  </style>
+</head>
 
-    </style>
-  </head>
-
-  <body class="landing">
-   <div id="page-wrapper">
-
-      <!--
-        Header & MENU
-      -->
-      <header id="header" style="border-bottom:solid 1px grey">
-        <h1><a href='#{"route":"home"}'>KTBS 4 LA</a></h1>
-        <nav id="nav">
-          <ul>
-            <li class="special">
-            <a href="#menu" class="menuToggle"><span>Menu</span></a>
-              <div id="menu">
-                <ul>
-                  <li><a href='#{"route":"home"}'>Home</a></li>
-                  <li><a href='#{"route":"base-selector"}'>Projects</a></li>
-                  <li><a id='_csvCollectorLink' href='#{"route":"choose-a-project"}'>Import csv</a></li>
-                  <li><i18n-panel id="i18nPanel" style="float:right" language="fr"></i18n-panel></li>
-                </ul>
-              </div>
-            </li>
-          </ul>
-        </nav>
-      </header>
-
-      <!--
-        TAAABS ELEMENTS
-      -->
-      <taaabs-taaabs>
-
-        <!-- Polymer Global App -->
-        <template is="dom-bind" id="app">
-
-          <!-- ROUTER -->
-          <properties-router id="pr" route="{{route}}"></properties-router>
-
-          <!-- The differents SECTIONS -->
-          <iron-pages attr-for-selected="data-route" selected="{{route.route}}">
-
-            <!-- HOME PAGE -->
-            <section data-route="home" id="banner">
-              <div class="inner">
-                <h2>KTBS 4 LA</h2>
-                <p>A brand new way to analyse your Technology Enhanced Learning traces,<br/> using a kernel for Trace Based System.</p>
-                <ul class="actions">
-                  <li><a href='#{"route":"base-selector"}' class="button special">GO !</a></li>
-                </ul>
-              </div>
-              <!-- FOR WHEN A DOC EXISTS
-                <a href="#one" class="more scrolly">Learn More</a>
-              -->
-            </section>
-
-            <!-- THE "PROJECTS" PAGE -->
-            <section id="tboSection" data-route="base-selector"  style="max-height : 100vh; padding: 80px; height: 100vh; " class="wrapper alt style5">
-              <div class="inner">
-                <!-- For when this component actually works :)
-                  <custom-scroll-bar dom-elem-id="tboSection"></custom-scroll-bar>
-                -->
-                <taaabs-base-overview id="tbo" ktbs-url="" language="{{i18n}}">
-                </taaabs-base-overview>
-              </div>
-            </section>
-
-            <!-- THE "I want to import a trace, but didn't chose a base" PAGE -->
-            <section data-route="choose-a-project" style="padding-top: 80px; min-height: 100vh" class="wrapper alt style5">
-              <div style="max-width:1000px; margin: 0 auto;">
-                <h4>
-                  Ooooops !
-                </h4>
-                <p>
-                It seems you haven't choose any project yet. <br/>
-                Please clic <a href='#{"route":"base-selector"}'>here</a> to pick one :)
-                </p>
-              </div>
-            </section>
-
-            <!-- SPARE LNC PAGE-->
-            <section data-route="spare" style="padding-top: 80px; min-height: 100vh" class="wrapper style5">
-              <taaabs-spare></taaabs-spare>
-            </section>
-
-            <!-- THE CSV COLLECTOR PAGE -->
-            <!--
-            <section data-route="csv-collector" style="padding-top: 80px; min-height: 100vh" class="wrapper alt style5">
-              <taaabs-csv-collector language="{{i18n}}" base-url="{{route.resource}}"></taaabs-csv-collector>
-            </section>
-            -->
-            <!-- THE BASE DETAILS ( GRAPH & LIST ) -->
-            <!-- TODO : FIND A WAY TO CENTRALIZE THE KTBS REQUESTS -->
-            <section data-route="base-details"  style="padding-top: 80px; min-height: 100vh" class="wrapper alt style5">
-              <div class="inner">
-                <taaabs-ktbs-overview id="tko" base-url="{{route.resource}}" language="{{i18n}}">
-                </taaabs-ktbs-overview>
-                <taaabs-base-details id="tbd" base-url="{{route.resource}}" language="{{i18n}}">
-                </taaabs-base-details>
-              </div>
-            </section>
-
-
-            <!-- THE TRACE DETAILS ( LIST & TOOLS SUGGESTIONS ) -->
-            <section data-route="trace-details"  style="padding-top: 80px; height: 100vh" class="wrapper alt style5">
-
-              <!-- THE TOOLS LINKS -->
-              <div style="max-width: 1000px; margin: 0 auto; background-color: #1e1e1e; padding: 20px; margin-bottom:30px;">
-                <a class="toolLink" href="" target="_blank">
-                  <div>
-                    <div><img src="images/logoTransmute.svg"></img> <br/></div>
-                    <div><span>SPARE</span></div>
-                  </div>
-                </a>
-
-                <a class="toolLink" href="{{traceLink.timeline}}" target="_blank">
-                  <div>
-                    <div><img src="images/logoTimeline.svg"></img> <br/></div>
-                    <div><span>TIMELINE</span></div>
-                  </div>
-                </a>
-
-                <p style="clear:both; width:100%;text-align:center; font-size:16px; margin-bottom:0px; padding-bottom:0px" >
-                  TOOLS BOX
-                </p>
-              </div>
-
-              <!-- THE TRACE DETAILS -->
-              <div class="inner">
-                <taaabs-trace-details id="ttd"  trace-url="{{route.resource}}" language="{{i18n}}">
-                </taaabs-trace-details>
-              </div>
-            </section>
-
-            <!-- THE TRACE TIMELINE -->
-            <section data-route="trace-timeline"  style="padding-top: 80px; min-height: 100vh" class="wrapper alt style5">
-              <taaabs-trace-timeline id="ttt" trace-url="{{route.resource}}" language="{{i18n}}">
-              </taaabs-trace-timeline>
-            </section>
-
-          </iron-pages>
-        </template>
-      </taaabs-taaabs>
-    </div>
+<body class="landing">
+  <div id="page-wrapper">
 
     <!--
+        Header & MENU
+      -->
+    <header id="header" style="border-bottom:solid 1px grey">
+      <h1><a href='#{"route":"home"}'>KTBS 4 LA</a></h1>
+      <nav id="nav">
+        <ul>
+          <li class="special">
+            <a href="#menu" class="menuToggle"><span>Menu</span></a>
+            <div id="menu">
+              <ul>
+                <li><a href='#{"route":"home"}'>Home</a></li>
+                <li><a href='#{"route":"base-selector"}'>Projects</a></li>
+                <li><a id='_csvCollectorLink' href='#{"route":"choose-a-project"}'>Import csv</a></li>
+                <li>
+                  <i18n-panel id="i18nPanel" style="float:right" language="fr"></i18n-panel>
+                </li>
+              </ul>
+            </div>
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+    <!--
+        TAAABS ELEMENTS
+      -->
+    <taaabs-taaabs>
+
+      <!-- Polymer Global App -->
+      <template is="dom-bind" id="app">
+
+        <!-- ROUTER -->
+        <properties-router id="pr" route="{{route}}"></properties-router>
+
+        <!-- The differents SECTIONS -->
+        <iron-pages attr-for-selected="data-route" selected="{{route.route}}">
+
+          <!-- HOME PAGE -->
+          <section data-route="home" id="banner">
+            <div class="inner">
+              <h2>KTBS 4 LA</h2>
+              <p>A brand new way to analyse your Technology Enhanced Learning traces,
+                <br/> using a kernel for Trace Based System.</p>
+              <ul class="actions">
+                <li><a href='#{"route":"base-selector"}' class="button special">GO !</a></li>
+              </ul>
+            </div>
+            <!-- FOR WHEN A DOC EXISTS
+                <a href="#one" class="more scrolly">Learn More</a>
+              -->
+          </section>
+
+          <!-- THE "PROJECTS" PAGE -->
+          <section id="tboSection" data-route="base-selector" style="max-height : 100vh; padding: 80px; height: 100vh; width: 1000px; margin: 0 auto">
+            <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
+              <taaabs-base-overview id="tbo" ktbs-url="https://liris-ktbs01.insa-lyon.fr:8000/hubble/" language="{{i18n}}" taaabs-central-loading>
+              </taaabs-base-overview>
+            </taaabs-resource-loader>
+          </section>
+
+          <!-- THE "I want to import a trace, but didn't chose a base" PAGE -->
+          <section data-route="choose-a-project" style="padding-top: 80px; min-height: 100vh">
+            <div style="max-width:1000px; margin: 0 auto;">
+              <h4>
+                  Ooooops !
+                </h4>
+              <p>
+                It seems you haven't choose any project yet.
+                <br/> Please clic <a href='#{"route":"base-selector"}'>here</a> to pick one :)
+              </p>
+            </div>
+          </section>
+
+          <!-- SPARE LNC PAGE-->
+          <section data-route="spare" style="padding-top: 80px; min-height: 100vh" class="wrapper style5">
+            <taaabs-spare></taaabs-spare>
+          </section>
+
+          -->
+          <!-- THE BASE DETAILS ( GRAPH & LIST ) -->
+          <!-- TODO : FIND A WAY TO CENTRALIZE THE KTBS REQUESTS -->
+          <section data-route="base-details" style="padding-top: 80px; min-height: 100vh" class="wrapper alt style5">
+            <div class="inner">
+              <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
+
+                <taaabs-base-graph id="tbg" taaabs-central-loading height="300px" bg-color="#2e3842" base-url="{{route.resource}}" language="{{i18n}}">
+                </taaabs-base-graph>
+
+                <taaabs-base-details id="tbd" base-url="{{route.resource}}" language="{{i18n}}" taaabs-central-loading>
+                </taaabs-base-details>
+              </taaabs-resource-loader>
+            </div>
+          </section>
+
+
+          <!-- THE TRACE DETAILS ( LIST & TOOLS SUGGESTIONS ) -->
+          <section data-route="trace-details" style="padding-top: 80px; height: 100vh" class="wrapper alt style5">
+
+            <!-- THE TOOLS LINKS -->
+            <div style="max-width: 1000px; margin: 0 auto; background-color: #1e1e1e; padding: 20px; margin-bottom:30px;">
+              <a class="toolLink" href="" target="_blank">
+                <div>
+                  <div><img src="images/logoTransmute.svg"></img>
+                    <br/>
+                  </div>
+                  <div><span>SPARE</span></div>
+                </div>
+              </a>
+
+              <a class="toolLink" href="{{traceLink.timeline}}" target="_blank">
+                <div>
+                  <div><img src="images/logoTimeline.svg"></img>
+                    <br/>
+                  </div>
+                  <div><span>TIMELINE</span></div>
+                </div>
+              </a>
+
+              <p style="clear:both; width:100%;text-align:center; font-size:16px; margin-bottom:0px; padding-bottom:0px">
+                TOOLS BOX
+              </p>
+            </div>
+
+            <!-- THE TRACE DETAILS -->
+            <div class="inner">
+              <taaabs-trace-details id="ttd" trace-url="{{route.resource}}" language="{{i18n}}">
+              </taaabs-trace-details>
+            </div>
+          </section>
+
+          <!-- THE CSV COLLECTOR PAGE -->
+          <section data-route="csv-collector" style="padding-top: 80px; min-height: 100vh; height: 100%" class="wrapper alt style5">
+            <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
+              <taaabs-csv-collector id="tcc" language="{{i18n}}" base-url="{{route.resource}}" taaabs-central-loading></taaabs-csv-collector>
+            </taaabs-resource-loader>
+          </section>
+
+
+          <!-- THE TRACE TIMELINE -->
+          <section data-route="trace-timeline" style="padding-top: 80px; min-height: 100vh" class="wrapper alt style5">
+            <taaabs-trace-timeline id="ttt" trace-url="{{route.resource}}" language="{{i18n}}">
+            </taaabs-trace-timeline>
+          </section>
+
+        </iron-pages>
+      </template>
+    </taaabs-taaabs>
+  </div>
+
+  <!--
       The Application Main Script
     -->
-    <script>
+  <script>
+    // Set the default route for first visit.
+    if (location.hash === "")
+      location.hash = '{"route":"home"}';
 
-      // Set the default route for first visit.
-      if(location.hash === "")
-        location.hash = '{"route":"home"}';
 
+    ////////////////////////////////////
+    // COMPONENTS LISTENERS FUNCTIONS //
+    ////////////////////////////////////
 
-      ////////////////////////////////////
-      // COMPONENTS LISTENERS FUNCTIONS //
-      ////////////////////////////////////
+    // Refresh the elements targeted by the route of the <properties-router>.
+    // e is the Event propagated by the <properties-router>.
+    function prRefreshFocusedElem(e) {
+      // If the route leads to the 'base-details' section.
+      if (app.route.route === "base-details") {
+        // We set the href url of the menu button 'csv collector'.
+        var ccl = document.getElementById('_csvCollectorLink');
+        ccl.href = '/#{"route":"csv-collector","resource":"' + app.route.resource + '"}';
+        // We refresh the taaabs-base-details and taaabs-ktbs-overview ( for the base graph ).
+        var tbg = document.getElementById('tbg');
+        if (tbg)
+          tbg.refresh();
+        var tbd = document.getElementById('tbd');
+        if (tbd)
+          tbd.refresh();
+      }
+      // If the route leads to the 'trace-details' section.
+      else if (app.route.route === "trace-details") {
+        // We set the href of each trace visualisation tool.
+        app.traceLink = {};
+        app.set('traceLink.timeline', '#{"route":"trace-timeline","resource":"' + app.route.resource + '"}');
+        // We refresh the taaabs-trace-details component.
+        var ttd = document.getElementById('ttd');
+        if (ttd)
+          ttd.refresh();
+      }
+      // If the route leads to the 'trace-timeline' section.
+      else if (app.route.route === "trace-timeline") {
+        // We refresh the taaabs-trace-timeline component.
+        var ttt = document.getElementById('ttt');
+        if (ttt)
+          ttt.refresh();
+      }
+      // If the route leads to the 'csv-collector' section.
+      else if (app.route.route === "csv-collector") {
+        // We refresh the taaabs-trace-timeline component.
+        var tcc = document.getElementById('tcc');
+        if (tcc)
+          tcc.refresh();
+      }
+    }
 
-      // Refresh the elements targeted by the route of the <properties-router>.
-      // e is the Event propagated by the <properties-router>.
-      function prRefreshFocusedElem(e){
-        // If the route leads to the 'base-details' section.
-        if( app.route.route === "base-details" ){
-          // We set the href url of the menu button 'csv collector'.
-          var ccl = document.getElementById('_csvCollectorLink');
-          ccl.href = '/#{"route":"csv-collector","resource":"'+app.route.resource+'"}';
-          // We refresh the taaabs-base-details and taaabs-ktbs-overview ( for the base graph ).
-          var tko = document.getElementById('tko');
-          if( tko )
-            tko.refresh();
-          var tbd = document.getElementById('tbd');
-          if( tbd )
-            tbd.refresh();
-        }
-        // If the route leads to the 'trace-details' section.
-        else if( app.route.route === "trace-details" ){
-          // We set the href of each trace visualisation tool.
-          app.traceLink = {};
-          app.set('traceLink.timeline', '/#{"route":"trace-timeline","resource":"'+app.route.resource+'"}');
-          // We refresh the taaabs-trace-details component.
-          var ttd = document.getElementById('ttd');
-          if( ttd )
-            ttd.refresh();
-        }
-        // If the route leads to the 'trace-timeline' section.
-        else if( app.route.route === "trace-timeline" ){
-          // We refresh the taaabs-trace-timeline component.
-          var ttt = document.getElementById('ttt');
-          if( ttt )
-            ttt.refresh();
+    // Is called when the taaabs-base-detail component fires a 'resourceSelected' event.
+    // Leads the application to the 'trace-details' route.
+    function tdbResourceSelected(e) {
+      // If the resource selected is a Stored Trace.
+      // We change the route of the current page, or open a new window, according
+      // to which button has been pressed.
+      if (e.detail.resourceType === "StoredTrace") {
+        if (e.detail.which !== 2) {
+          location.hash = '{"route":"trace-details","resource":"' + e.detail.resourceURL + '"}';
+          app.resource = e.detail.resourceURL;
+        } else {
+          window.open("/#" + '{"route":"trace-details","resource":"' + e.detail.resourceURL + '"}');
         }
       }
+    }
 
-      // Is called when the taaabs-base-detail component fires a 'resourceSelected' event.
-      // Leads the application to the 'trace-details' route.
-      function tdbResourceSelected(e){
-        // If the resource selected is a Stored Trace.
-        // We change the route of the current page, or open a new window, according
-        // to which button has been pressed.
-        if(e.detail.resourceType === "StoredTrace"){
-          if(e.detail.which !== 2){
-            location.hash = '{"route":"trace-details","resource":"'+e.detail.resourceURL+'"}';
-            app.resource = e.detail.resourceURL;
-          }
-          else{
-            window.open("/#"+'{"route":"trace-details","resource":"'+e.detail.resourceURL+'"}');
-          }
-        }
+    // Is called when the taaabs-trace-detail component fires a 'baseClicked' event.
+    // Leads the application to the 'base-details' route.
+    function ttdBaseClicked(e) {
+      if (e.detail.which !== 2) {
+        location.hash = '{"route":"base-details","resource":"' + e.detail.baseURL + '"}';
+        app.resource = e.detail.baseURL;
+      } else {
+        window.open("/#" + '{"route":"base-details","resource":"' + e.detail.baseURL + '"}');
       }
+    }
 
-      // Is called when the taaabs-trace-detail component fires a 'baseClicked' event.
-      // Leads the application to the 'base-details' route.
-      function ttdBaseClicked(e){
-        if(e.detail.which !== 2){
-          location.hash = '{"route":"base-details","resource":"'+e.detail.baseURL+'"}';
-          app.resource = e.detail.baseURL;
-        }
-        else{
-          window.open("/#"+'{"route":"base-details","resource":"'+e.detail.baseURL+'"}');
-        }
+    // Is called when the taaabs-base-overview component fires a 'baseSelected' event.
+    // Leads the application to the 'base-details' route.
+    function tboBaseSelected(e) {
+      if (e.detail.which !== 2) {
+        location.hash = '{"route":"base-details","resource":"' + e.detail.baseId + '"}';
+        app.resource = app.ktbsUrl + e.detail.baseId;
+      } else {
+        window.open("/#" + '{"route":"base-details","resource":"' + e.detail.baseId + '"}');
       }
+    }
 
-      // Is called when the taaabs-base-overview component fires a 'baseSelected' event.
-      // Leads the application to the 'base-details' route.
-      function tboBaseSelected(e){
-        if(e.detail.which !== 2){
-          location.hash = '{"route":"base-details","resource":"'+e.detail.baseId+'"}';
-          app.resource = app.ktbsUrl+e.detail.baseId;
+
+    ////////////////////////////////
+    // WHEN THE DOCUMENT IS READY //
+    ////////////////////////////////
+
+    document.addEventListener("DOMContentLoaded", function(event) {
+
+      // App will be the main object of our application.
+      var app = document.getElementById("app");
+
+      // We loop until we get the properties-router component.
+      // We then set the behavior on the 'routeChanged' event.
+      var intervalPR = setInterval(function() {
+        var pr = document.getElementById('pr');
+        if (pr) {
+          pr.addEventListener('routeChanged', prRefreshFocusedElem);
+          prRefreshFocusedElem();
+          clearInterval(intervalPR);
         }
-        else{
-          window.open("/#"+'{"route":"base-details","resource":"'+e.detail.baseId+'"}');
+      }, 500);
+
+      // We loop until we get the taaabs-base-details component.
+      // We then set the behavior on the 'resourceSelected' event.
+      var intervalTBD = setInterval(function() {
+        var tbd = document.getElementById('tbd');
+        if (tbd) {
+          tbd.addEventListener('resourceSelected', tdbResourceSelected);
+          clearInterval(intervalTBD);
         }
-      }
+      }, 500)
 
+      // We loop until we get the taaabs-trace-details component.
+      // We then set the behavior on the 'baseClicked' and 'modelClicked' events.
+      var intervalTTD = setInterval(function() {
+        var ttd = document.getElementById('ttd');
+        if (ttd) {
+          ttd.addEventListener('baseClicked', ttdBaseClicked);
+          ttd.addEventListener('modelClicked', function(e) {
+            // TODO: Complete this event.
+          });
+          clearInterval(intervalTTD);
+        }
+      }, 500)
 
-      ////////////////////////////////
-      // WHEN THE DOCUMENT IS READY //
-      ////////////////////////////////
+      // We loop until we get the taaabs-ktbs-overview component (in 'base-details' route).
+      var intervalTBG = setInterval(function() {
+        var tbg = document.getElementById('tko');
+        if (tbg) {
+          // TODO : Complete this event.
+          clearInterval(intervalTBG);
+        }
+      }, 500);
 
-      document.addEventListener("DOMContentLoaded", function(event) {
+      // We loop until we get the taaabs-base-overview component.
+      // We then set the behavior on the 'baseSelected' event.
+      var intervalTBO = setInterval(function() {
+        var tbo = document.getElementById('tbo');
+        if (tbo) {
+          tbo.addEventListener('baseSelected', tboBaseSelected);
+          clearInterval(intervalTBO);
+        }
+      }, 500);
 
-        // App will be the main object of our application.
-        var app = document.getElementById("app");
+      // We loop until we get the i18n component.
+      // We then set the behavior on the 'languageChanged' event.
+      var intervalI18N = setInterval(function() {
+        var i18n = document.getElementById('i18nPanel');
+        if (i18n) {
+          i18n.addEventListener('languageChanged', function() {
+            app.set('i18n', i18n.language);
+          });
+          clearInterval(intervalI18N);
+        }
+      }, 500);
+    });
+  </script>
 
-        // We loop until we get the properties-router component.
-        // We then set the behavior on the 'routeChanged' event.
-        var intervalPR = setInterval( function(){
-          var pr = document.getElementById('pr');
-          if( pr ){
-            pr.addEventListener('routeChanged', prRefreshFocusedElem );
-            prRefreshFocusedElem();
-            clearInterval( intervalPR );
-          }
-        },500);
+  <!-- IMPORTS FOR THE HTML5UP ASPECT -->
+  <script src="assets/js/jquery.min.js"></script>
+  <script src="assets/js/jquery.scrollex.min.js"></script>
+  <script src="assets/js/jquery.scrolly.min.js"></script>
+  <script src="assets/js/skel.min.js"></script>
+  <script src="assets/js/util.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
 
-        // We loop until we get the taaabs-base-details component.
-        // We then set the behavior on the 'resourceSelected' event.
-        var intervalTBD = setInterval( function(){
-          var tbd = document.getElementById('tbd');
-          if(tbd){
-            tbd.addEventListener('resourceSelected', tdbResourceSelected);
-            clearInterval( intervalTBD );
-          }
-        })
-
-        // We loop until we get the taaabs-trace-details component.
-        // We then set the behavior on the 'baseClicked' and 'modelClicked' events.
-        var intervalTTD = setInterval( function(){
-          var ttd = document.getElementById('ttd');
-          if(ttd){
-            ttd.addEventListener('baseClicked', ttdBaseClicked);
-            ttd.addEventListener('modelClicked', function(e){
-               // TODO: Complete this event.
-            });
-            clearInterval( intervalTTD );
-          }
-        },500)
-
-        // We loop until we get the taaabs-ktbs-overview component (in 'base-details' route).
-        var intervalTKO = setInterval( function(){
-          var tko = document.getElementById('tko');
-            if(tko){
-              // TODO : Complete this event.
-              clearInterval( intervalTKO );
-            }
-        },500);
-
-        // We loop until we get the taaabs-base-overview component.
-        // We then set the behavior on the 'baseSelected' event.
-        var intervalTBO = setInterval( function(){
-            var tbo = document.getElementById('tbo');
-            if(tbo){
-              tbo.addEventListener('baseSelected', tboBaseSelected);
-              clearInterval( intervalTBO );
-            }
-        },500);
-
-        // We loop until we get the i18n component.
-        // We then set the behavior on the 'languageChanged' event.
-        var intervalI18N = setInterval( function(){
-          var i18n = document.getElementById('i18nPanel');
-          if(i18n){
-            i18n.addEventListener('languageChanged', function(){
-              app.set('i18n', i18n.language);
-            });
-            clearInterval(intervalI18N);
-          }
-        },500);
-      });
-    </script>
-
-    <!-- IMPORTS FOR THE HTML5UP ASPECT -->
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/js/jquery.scrollex.min.js"></script>
-    <script src="assets/js/jquery.scrolly.min.js"></script>
-    <script src="assets/js/skel.min.js"></script>
-    <script src="assets/js/util.js"></script>
-    <script src="assets/js/main.js"></script>
-  </body>
 </html>
