@@ -382,4 +382,91 @@
   <script src="assets/js/main.js"></script>
 </body>
 
+<<<<<<< HEAD
+=======
+      ////////////////////////////////
+      // WHEN THE DOCUMENT IS READY //
+      ////////////////////////////////
+
+      document.addEventListener("DOMContentLoaded", function(event) {
+
+        // App will be the main object of our application.
+        var app = document.getElementById("app");
+
+        // We loop until we get the properties-router component.
+        // We then set the behavior on the 'routeChanged' event.
+        var intervalPR = setInterval( function(){
+          var pr = document.getElementById('pr');
+          if( pr ){
+            pr.addEventListener('routeChanged', prRefreshFocusedElem );
+            prRefreshFocusedElem();
+            clearInterval( intervalPR );
+          }
+        },500);
+
+        // We loop until we get the taaabs-base-details component.
+        // We then set the behavior on the 'resourceSelected' event.
+        var intervalTBD = setInterval( function(){
+          var tbd = document.getElementById('tbd');
+          if(tbd){
+            tbd.addEventListener('resourceSelected', tdbResourceSelected);
+            clearInterval( intervalTBD );
+          }
+        },500)
+
+        // We loop until we get the taaabs-trace-details component.
+        // We then set the behavior on the 'baseClicked' and 'modelClicked' events.
+        var intervalTTD = setInterval( function(){
+          var ttd = document.getElementById('ttd');
+          if(ttd){
+            ttd.addEventListener('baseClicked', ttdBaseClicked);
+            ttd.addEventListener('modelClicked', function(e){
+               // TODO: Complete this event.
+            });
+            clearInterval( intervalTTD );
+          }
+        },500)
+
+        // We loop until we get the taaabs-ktbs-overview component (in 'base-details' route).
+        var intervalTKO = setInterval( function(){
+          var tko = document.getElementById('tko');
+            if(tko){
+              // TODO : Complete this event.
+              clearInterval( intervalTKO );
+            }
+        },500);
+
+        // We loop until we get the taaabs-base-overview component.
+        // We then set the behavior on the 'baseSelected' event.
+        var intervalTBO = setInterval( function(){
+            var tbo = document.getElementById('tbo');
+            if(tbo){
+              tbo.addEventListener('baseSelected', tboBaseSelected);
+              clearInterval( intervalTBO );
+            }
+        },500);
+
+        // We loop until we get the i18n component.
+        // We then set the behavior on the 'languageChanged' event.
+        var intervalI18N = setInterval( function(){
+          var i18n = document.getElementById('i18nPanel');
+          if(i18n){
+            i18n.addEventListener('languageChanged', function(){
+              app.set('i18n', i18n.language);
+            });
+            clearInterval(intervalI18N);
+          }
+        },500);
+      });
+    </script>
+
+    <!-- IMPORTS FOR THE HTML5UP ASPECT -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/skel.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+  </body>
+>>>>>>> b8981dc67457dd7f2115d98413297a11139e1979
 </html>
