@@ -18,6 +18,7 @@
 
     <textarea style="display: block; margin: 0 auto; width: 1000px" id='requestTextArea'></textarea>
     <pre style="display: block; margin: 0 auto; max-width: 1000px; width: 1000px" id='requestResultDiv'></pre>
+    <div on-click="_sendRequest" class="button"> OK </div>
     <div style="margin: 0 auto; width: 1000px;">
         <yasgui-component id="yc"></yasgui-component>
     </div>
@@ -79,15 +80,22 @@ Polymer({
     _requestTextAreaKeyUp: function(e){
         e.preventDefault();
         try {
+          /*
            var result = parserCLN.parse(this.$.requestTextArea.value);
 
            this.$.yc.refresh( result );
-
+           */
         }
         catch (e) {
            this.$.requestResultDiv.textContent = e;
         }
     },
+
+    _sendRequest: function(){
+      var result = parserCLN.parse(this.$.requestTextArea.value);
+
+      this.$.yc.refresh( result );
+    }
 
 });
 </script>
