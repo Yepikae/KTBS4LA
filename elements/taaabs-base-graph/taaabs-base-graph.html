@@ -1,0 +1,633 @@
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<link rel="import" href="../sigma-js-component/sigma-js-component.html">
+<dom-module id="taaabs-base-graph">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      :host #legend {
+        float: right;
+        color: white;
+        text-align: right;
+        margin-right: 10px;
+        margin-top: 10px;
+        text-transform: uppercase;
+        font-size: 10px
+      }
+
+      :host #refreshIcon {
+        height: 30px;
+        width: 30px;
+        opacity: 0.87;
+        cursor: pointer;
+        z-index: 1000;
+        color: white;
+        -moz-transition: all 0.25s ease;
+        -webkit-transition: all 0.25s ease;
+        -o-transition: all 0.25s ease;
+        transition: all 0.25s ease;
+      }
+
+      :host #refreshIcon:hover {
+        opacity: 1;
+      }
+    </style>
+
+    <div style="width:1000px; margin: 0 auto;">
+      <div id="legend">
+        <iron-icon id="refreshIcon" on-click="refresh" icon='icons:autorenew'></iron-icon>
+        <div>
+          <span>{{i18n.base.default}}</span>
+          <iron-icon style="color:#F2784B; height: 16px; margin: 2px" icon='icons:radio-button-checked'></iron-icon>
+        </div>
+        <div>
+          <span>{{i18n.model.default}}</span>
+          <iron-icon style="color:#F4D03F; height: 16px; margin: 2px" icon='icons:radio-button-checked'></iron-icon>
+        </div>
+        <div>
+          <span>{{i18n.ct.default}}</span>
+          <iron-icon style="color:#446CB3; height: 16px; margin: 2px" icon='icons:radio-button-checked'></iron-icon>
+        </div>
+        <div>
+          <span>{{i18n.st.default}}</span>
+          <iron-icon style="color:#81CFE0; height: 16px; margin: 2px" icon='icons:radio-button-checked'></iron-icon>
+        </div>
+      </div>
+    </div>
+
+    <sigma-js-component id="sjc" width="{{width}}" height="{{height}}" bg-color="{{bgColor}}">
+    </sigma-js-component>
+  </template>
+
+  <script>
+    Polymer({
+      is: "taaabs-base-graph",
+
+      properties: {
+
+        //////////////
+        // CSS VARS //
+        //////////////
+
+        bgColor: {
+          type: String,
+          value: "#1e1e1e"
+        },
+
+        height: {
+          type: String,
+          value: "500px"
+        },
+
+        width: {
+          type: String,
+          value: "1000px"
+        },
+
+        /**
+         * An interval spinning the refresh icon.
+         *
+         * @attribute _loadingInterval
+         * @type Object
+         */
+        _loadingInterval: {
+          type: Object,
+          notify: true,
+          value: function() {
+            return {};
+          }
+        },
+
+        /**
+         * The refresh icon css angle.
+         *
+         * @attribute _loadingAngle
+         * @type Number
+         */
+        _loadingAngle: {
+          type: Number,
+          notify: true,
+          value: 0
+        },
+
+        ////////////////////
+        // LOADER BOOLEAN //
+        ////////////////////
+
+        taaabsCentralLoading: {
+          type: Boolean,
+          notify: true,
+          value: false
+        },
+
+        ////////////////////
+        // RESOURCES VARS //
+        ////////////////////
+
+        baseUrl: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+        _base: {
+          type: Object,
+          notify: true,
+          value: null,
+          observer: '_baseChanged'
+        },
+
+        _resources: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        _resourcesCount: {
+          type: Number,
+          notify: true,
+          value: 0
+        },
+
+        _loadedCount: {
+          type: Number,
+          notify: true,
+          value: 0
+        },
+
+        _tmpResource: {
+          type: Object,
+          notify: true,
+          value: null,
+          observer: '_tmpResourceChanged'
+        },
+
+
+
+
+        _order: {
+          type: Object,
+          value: {
+            'Base': 1,
+            'TraceModel': 2,
+            'StoredTrace': 3,
+            'ComputedTrace': 4
+          }
+        },
+
+        //////////
+        // I18N //
+        //////////
+
+        /**
+         * Localization object.
+         *
+         * @attribute i18n
+         * @type Object
+         */
+        i18n: {
+          type: Object,
+          value: {
+            "base": {
+              "default": "Base",
+              "en": "Base",
+              "fr": "Base"
+            },
+            "model": {
+              "default": "Model",
+              "en": "Model",
+              "fr": "Modèle"
+            },
+            "ct": {
+              "default": "Computed Trace",
+              "en": "Computed Trace",
+              "fr": "Trace Transformée"
+            },
+            "st": {
+              "default": "Stored Trace",
+              "en": "Stored Trace",
+              "fr": "Trace Primaire"
+            }
+          },
+          notify: true
+        },
+
+        /**
+         * Localization.
+         * fr, en.
+         *
+         * @attribute language
+         * @type String
+         */
+        language: {
+          type: String,
+          notify: true,
+          observer: "_languageChanged"
+        },
+
+      },
+
+      ready: function() {
+
+      },
+
+      _languageChanged: function() {
+        for (var prop in this.i18n) {
+          var tmp = "i18n." + prop + ".default";
+          this.set(tmp, this.i18n[prop][this.language]);
+        }
+      },
+
+      refresh: function() {
+        if (this.baseUrl) {
+          var that = this;
+          // The interval that rotate the refresh button
+          this._loadingInterval = setInterval(function() {
+            that.transform('rotate(' + that._loadingAngle + 'deg)', that.$.refreshIcon);
+            that.set('_loadingAngle', that._loadingAngle + 15);
+          }, 50);
+
+          this.set('_resources', []);
+          this.set('_base', null);
+          this.set('_tmpResource', null);
+          this.$.sjc.setGraph();
+
+          this.fire('UPDATE_RESOURCE', {
+            url: this.baseUrl,
+            obj: '_base'
+          });
+        }
+      },
+
+      _baseChanged: function() {
+        if (this._base) {
+
+          console.log(this._base);
+
+          var that = this;
+          // TODO : FINISH THIS
+          /*
+          this._base.load_properties( ['obselCount','hasModel','label'] )
+            .then( function( contains ){
+
+
+              var sorted = that._quickSort(contains);
+              that._setUris( sorted, that._base );
+
+              console.log( sorted );
+
+              this.set('_tree', {});
+
+
+
+            })
+            .catch( function(err){
+              console.log(err);
+            });
+            */
+
+
+          this.push('_resources', {
+            resource: this._base,
+            parentIndex: -1
+          })
+          this._loadModels(this._base);
+          this._loadStoredTraces(this._base);
+          this._loadComputedTraces(this._base);
+          this._loadBases(this._base);
+
+
+        }
+      },
+
+
+
+      _createTree: function(resources) {
+        for (var i = 0; i < resources.length; i++) {
+          if (resources[i]['@type'] === 'Base') {
+            this._tree[resource[i].uri] = {
+              resource: resource[i],
+              children: {}
+            }
+          }
+        }
+      },
+
+      _loadBase: function(baseUri) {
+
+      },
+
+      _setUris: function(contains, base) {
+        for (var i = 0; i < contains.length; i++) {
+          contains[i].uri = (new Samotraces.Ktbs.Resource()).getAbsoluteURLFromRelative(base.uri, contains[i]['@id']);
+          if (contains[i].hasModel)
+            contains[i].hasModel = (new Samotraces.Ktbs.Resource()).getAbsoluteURLFromRelative(base.uri, contains[i]['hasModel']);
+          // TODO : ADD hasSource ...
+        }
+      },
+
+      _quickSort: function(xxs) {
+
+        var that = this;
+        if (xxs.length) {
+          var x = xxs[0],
+            xs = xxs.slice(1),
+
+            less = this._quickSort(xs.filter(function(a) {
+              return that._order[a["@type"]] <= that._order[x["@type"]];
+            })),
+
+            more = this._quickSort(xs.filter(function(a) {
+              return that._order[a["@type"]] > that._order[x["@type"]];
+            }));
+
+          return less
+            .concat([x])
+            .concat(more);
+
+        } else return xxs;
+      },
+
+
+
+
+
+
+
+
+
+      _tmpResourceChanged: function() {
+        if (this._tmpResource) {
+          var resource = this._tmpResource;
+          switch (resource.type) {
+            case "TraceModel":
+              this.push('_resources', this._addModel(resource));
+              break;
+            case "StoredTrace":
+              this.push('_resources', this._addStoredTrace(resource));
+              break;
+            case "ComputedTrace":
+              this.push('_resources', this._addComputedTrace(resource));
+              break;
+            case "Base":
+              this.push('_resources', this._addBase(resource));
+              this._loadModels(resource);
+              this._loadStoredTraces(resource);
+              this._loadComputedTraces(resource);
+              this._loadBases(resource);
+              break;
+          }
+          this.set('_loadedCount', this._loadedCount + 1);
+          if (this._loadedCount === this._resourcesCount) {
+            // RefreshIcon can stop spinning
+            clearInterval(this._loadingInterval);
+            this._checkParentIndexes();
+            this._createGraph();
+          }
+        }
+      },
+
+      _checkParentIndexes: function() {
+        for (var i = 1; i < this._resources.length; i++) {
+          if (this._resources[i].parentIndex === -1) {
+            switch (this._resources[i].resource.type) {
+              case "TraceModel":
+                this._resources[i] = this._addModel(this._resources[i].resource);
+                break;
+              case "StoredTrace":
+                this._resources[i] = this._addStoredTrace(this._resources[i].resource);
+                break;
+              case "ComputedTrace":
+                this._resources[i] = this._addComputedTrace(this._resources[i].resource);
+                break;
+              case "Base":
+                this._resources[i] = this._addBase(this._resources[i].resource);
+                break;
+            }
+          }
+        }
+      },
+
+      _createGraph: function() {
+        this.$.sjc.addNode(this._createNode(this._resources[0].resource, 0));
+        for (var i = 1; i < this._resources.length; i++) {
+          this.$.sjc.addNode(this._createNode(this._resources[i].resource, i));
+        }
+        for (var i = 1; i < this._resources.length; i++) {
+          this.$.sjc.addEdge(this._createEdge(this._resources[i].resource, this._resources[i].parentIndex, i));
+        }
+        this.$.sjc.forceAtlas2();
+      },
+
+      _createNode: function(resource, index) {
+        var node = {
+          "id": 'n' + index,
+          "x": 10 + ((index * 10) % 500),
+          "y": 10 + Math.floor(index / 50) * 10,
+          "resource": resource
+        }
+        switch (resource.type) {
+          case "TraceModel":
+            node.label = resource.uri.split('/');
+            if (node.label[node.label.length - 1] !== "") node.label = node.label[node.label.length - 1];
+            else node.label = node.label[node.label.length - 2] + '/';
+            node.color = node.originalColor = '#F4D03F';
+            node.size = 2;
+            break;
+          case "StoredTrace":
+            node.label = resource.uri.split('/');
+            node.label = node.label[node.label.length - 2];
+            node.color = node.originalColor = '#81CFE0';
+            node.size = 1;
+            break;
+          case "ComputedTrace":
+            node.label = resource.uri.split('/');
+            node.label = node.label[node.label.length - 2];
+            node.color = node.originalColor = '#446CB3';
+            node.size = 1;
+            break;
+          case "Base":
+            node.label = resource.uri.split('/');
+            node.label = node.label[node.label.length - 2];
+            node.color = node.originalColor = '#F2784B';
+            node.size = 3;
+            break;
+        }
+        return node;
+      },
+
+      _createEdge: function(resource, parentIndex, index) {
+
+        if (parentIndex === -1)
+          parentIndex = 0;
+
+        var edge = {
+          "id": 'e' + index,
+          "source": 'n' + parentIndex,
+          "target": 'n' + index
+        }
+        return edge;
+      },
+
+      ////////////////////
+      // _ADD FUNCTIONS //
+      ////////////////////
+
+      _addBase: function(base) {
+        var uri = (new Samotraces.Ktbs.Resource(null)).getAbsoluteURLFromRelative(base.uri, '../');
+        if (uri[uri.length - 1] !== '/')
+          uri = uri + '/';
+        for (var i = 0; i < this._resources.length; i++) {
+          if (this._resources[i].resource.uri === uri) {
+            return {
+              resource: base,
+              parentIndex: i
+            }
+          }
+        }
+        return {
+          resource: base,
+          parentIndex: -1
+        };
+      },
+
+      _addModel: function(model) {
+        for (var i = 0; i < this._resources.length; i++) {
+          if (this._resources[i].resource.uri === model.base_uri) {
+            return {
+              resource: model,
+              parentIndex: i
+            }
+          }
+        }
+        return {
+          resource: model,
+          parentIndex: -1
+        };
+      },
+
+      _addStoredTrace: function(trace) {
+        var sourceUri = '';
+        if (trace.model_uri.indexOf(trace.base_uri) !== -1)
+          sourceUri = trace.model_uri;
+        else
+          sourceUri = trace.base_uri;
+        for (var i = 0; i < this._resources.length; i++) {
+          if (this._resources[i].resource.uri === sourceUri) {
+            return {
+              resource: trace,
+              parentIndex: i
+            }
+          }
+        }
+        return {
+          resource: trace,
+          parentIndex: -1
+        };
+      },
+
+      _addComputedTrace: function(trace) {
+        var sourceUri = '';
+        for (var i = 0; i < trace.hasSource.length; i++) {
+          var uri = (new Samotraces.Ktbs.Resource(null)).getAbsoluteURLFromRelative(trace.uri, trace.hasSource[i]);
+          if (uri.indexOf(trace.base_uri) !== -1) {
+            sourceUri = uri;
+            i = trace.hasSource.length;
+          }
+        }
+        if (sourceUri === '')
+          sourceUri = trace.base_uri;
+
+        for (var i = 0; i < this._resources.length; i++) {
+          if (this._resources[i].resource.uri === sourceUri) {
+            return {
+              resource: trace,
+              parentIndex: i
+            }
+          }
+        }
+        return {
+          resource: trace,
+          parentIndex: -1
+        };
+      },
+
+      /////////////////////
+      // _LOAD FUNCTIONS //
+      /////////////////////
+
+      _loadModels: function(base) {
+        var that = this;
+        base.iter_models()
+          .forEach(function(model) {
+            that.fire('UPDATE_RESOURCE', {
+              url: model.uri,
+              obj: '_tmpResource'
+            });
+          })
+          .then(function(models) {
+            that.set('_resourcesCount', that._resourcesCount + models.length);
+          })
+          .catch(function(err) {
+            console.log(err);
+          });
+      },
+
+      _loadStoredTraces: function(base) {
+        var that = this;
+        base.iter_stored_traces()
+          .forEach(function(trace) {
+            that.fire('UPDATE_RESOURCE', {
+              url: trace.uri,
+              obj: '_tmpResource'
+            });
+          })
+          .then(function(traces) {
+            that.set('_resourcesCount', that._resourcesCount + traces.length);
+          })
+          .catch(function(err) {
+            console.log(err);
+          });
+      },
+
+      _loadComputedTraces: function(base) {
+        var that = this;
+        base.iter_computed_traces()
+          .forEach(function(trace) {
+            that.fire('UPDATE_RESOURCE', {
+              url: trace.uri,
+              obj: '_tmpResource'
+            });
+          })
+          .then(function(traces) {
+            that.set('_resourcesCount', that._resourcesCount + traces.length);
+          })
+          .catch(function(err) {
+            console.log(err);
+          });
+      },
+
+      _loadBases: function(base) {
+        var that = this;
+        base.iter_bases()
+          .forEach(function(base) {
+            that.fire('UPDATE_RESOURCE', {
+              url: base.uri,
+              obj: '_tmpResource'
+            });
+          })
+          .then(function(bases) {
+            that.set('_resourcesCount', that._resourcesCount + bases.length);
+          })
+          .catch(function(err) {
+            console.log(err);
+          });
+      }
+
+    });
+  </script>
+
+</dom-module>

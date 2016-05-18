@@ -1,0 +1,142 @@
+<dom-module id="sigma-js-component">
+  <template>
+    <style>
+      :host{
+        display: block;
+      }
+
+      :host #canvas{
+        background-color: [[bgColor]];
+        height: [[height]];
+        width: [[width]];
+      }
+
+    </style>
+    <div id="canvas"></div>
+  </template>
+
+  <script>
+    Polymer({
+      is: "sigma-js-component",
+
+      properties: {
+
+        //////////////
+        // CSS VARS //
+        //////////////
+
+        bgColor: {
+          type: String,
+          value: "#1e1e1e"
+        },
+
+        height: {
+          type: String,
+          value: "500px"
+        },
+
+        width: {
+          type: String,
+          value: "1000px"
+        },
+
+        ////////////////
+        // SIGMA VARS //
+        ////////////////
+
+        _sigma: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        settings: {
+          type: Object,
+          notify: true,
+          value: function(){
+            return {
+              defaultLabelColor: '#fff'
+            }
+          }
+        }
+
+      },
+
+      ready: function(){
+        this.setGraph();
+      },
+
+      attached: function(){
+        var sBrowser = navigator.userAgent;
+        if (sBrowser.indexOf("Firefox") > -1) {
+          this.$.canvas.style.width = this.width;
+          this.$.canvas.style.height = this.height;
+          this.$.canvas.style.backgroundColor = this.bgColor;
+        }
+      },
+
+      setGraph: function( graph, settings ){
+        var graph = graph || {nodes:[],edges:[]};
+        this.$.canvas.innerHTML = '';
+
+        this.set( '_sigma', new sigma({
+          graph: graph,
+          container: this.$.canvas,
+          settings: settings || this.settings
+        }) )
+
+        this._sigma.bind('clickNode', this._onNodeClick );
+      },
+
+      addNode: function( node ){
+        this._sigma.graph.addNode( node );
+        return node.id;
+      },
+
+      createNode: function( label, color, size ){
+        var nodeId = 'n'+this._sigma.graph.nodes().length;
+        this.addNode({
+          "id": nodeId,
+          "label": label,
+          "color": color,
+          "originalColor": color,
+          "size": size,
+          "x": 10 + ( ( this._sigma.graph.nodes().length * 10 ) % 500 ),
+          "y": 10 + Math.floor( this._sigma.graph.nodes().length / 50 ) * 10
+        });
+        return nodeId;
+      },
+
+      addEdge: function( edge ){
+        this._sigma.graph.addEdge( edge );
+        return edge.id;
+      },
+
+      createEdge: function( source, target ){
+        var edgeId = 'e'+this._sigma.graph.edges().length;
+        this.addEdge({
+          source: source,
+          target: target,
+          id: edgeId
+        })
+        return edgeId;
+      },
+
+      _onNodeClick: function(e){
+        this.fire('NODE_CLICKED', {node: e.data.node});
+      },
+
+      forceAtlas2: function( timeout ){
+        this._sigma.startForceAtlas2();
+        var that = this;
+        var timeout = timeout || 1000;
+        setTimeout(
+          function(){ that._sigma.stopForceAtlas2(); },
+          timeout
+        );
+      }
+
+    });
+  </script>
+
+</dom-module>
