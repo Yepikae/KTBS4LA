@@ -1,0 +1,65 @@
+<link rel="import" href="yasgui-theme.html">
+<dom-module id="yasgui-component">
+  <script type="text/javascript" src="yasgui.min.js"></script>
+
+  <template>
+    <style include="yasgui-theme"></style>
+    <div id="showcase"></div>
+  </template>
+
+  <script>
+    Polymer({
+      is: "yasgui-component",
+
+      properties: {
+
+        _yasqe: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        _yasr: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        _query: {
+          type: String,
+          notify: true,
+          value: ""
+        }
+
+      },
+
+      ready: function() {
+        this.set('_yasqe', new YASGUI.YASQE() );
+        this.set('_yasr', new YASGUI.YASR( this.$.showcase ) );
+
+        // TODO : {!IMPORTANT} Change the urls
+        console.log( this._yasqe );
+        this._yasqe.options.sparql.endpoint = 'https://liris-ktbs01.insa-lyon.fr:8000/hubble/baseTestRemi/t1/@obsels';
+      },
+
+      refresh: function( query ) {
+
+        var query = query || this._query;
+        this._yasqe.setValue( query );
+        this._yasqe.query( this._drawResponse )
+
+      },
+
+      _drawResponse: function( response ){
+
+        var response = response || this._response;
+
+        this._yasr.setResponse(response);
+        this._yasr.draw();
+
+      }
+
+    });
+  </script>
+
+</dom-module>
