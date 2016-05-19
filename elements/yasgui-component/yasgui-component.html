@@ -51,7 +51,7 @@
 
         var query = query || this._query;
         this._yasqe.setValue( query );
-        this._yasqe.query( this._drawResponse )
+        this._yasqe.query( this._drawResponse.bind(this) )
 
       },
 
