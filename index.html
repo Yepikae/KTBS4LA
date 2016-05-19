@@ -129,7 +129,11 @@
 
           <!-- SPARE LNC PAGE-->
           <section data-route="spare" style="padding-top: 80px; min-height: 100vh" class="wrapper style5">
-            <taaabs-spare></taaabs-spare>
+            <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
+              <taaabs-spare id="ts" taaabs-central-loading
+              trace-url="{{route.resource}}">
+            </taaabs-spare>
+            </taaabs-resource-loader>
           </section>
 
           -->
@@ -255,6 +259,13 @@
         var tcc = document.getElementById('tcc');
         if (tcc)
           tcc.refresh();
+      }
+      // If the route leads to the 'spare' section.
+      else if (app.route.route === "spare") {
+        // We refresh the taaabs-trace-timeline component.
+        var ts = document.getElementById('ts');
+        if (ts)
+          ts.refresh();
       }
     }
 

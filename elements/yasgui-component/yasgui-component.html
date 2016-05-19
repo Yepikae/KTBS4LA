@@ -13,6 +13,13 @@
 
       properties: {
 
+        endPoint: {
+          type: String,
+          notify: true,
+          value :"",
+          observer: "_endPointChanged"
+        },
+
         _yasqe: {
           type: Object,
           notify: true,
@@ -36,10 +43,6 @@
       ready: function() {
         this.set('_yasqe', new YASGUI.YASQE() );
         this.set('_yasr', new YASGUI.YASR( this.$.showcase ) );
-
-        // TODO : {!IMPORTANT} Change the urls
-        console.log( this._yasqe );
-        this._yasqe.options.sparql.endpoint = 'https://liris-ktbs01.insa-lyon.fr:8000/hubble/baseTestRemi/t1/@obsels';
       },
 
       refresh: function( query ) {
@@ -61,6 +64,11 @@
         this._yasr.setResponse(response);
         this._yasr.draw();
 
+      },
+
+      _endPointChanged: function(){
+        if(this.endPoint !== "")
+          this._yasqe.options.sparql.endpoint = this.endPoint;
       }
 
     });

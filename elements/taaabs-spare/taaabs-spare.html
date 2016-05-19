@@ -1,103 +1,289 @@
 <link rel="import" href="../yasgui-component/yasgui-component.html">
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
 <dom-module id="taaabs-spare">
 
   <script type="text/javascript" src="parser.js"></script>
   <script type="text/javascript" src="ftmXhyxZ.js"></script>
   <template>
+    <style include="taaabs-dark-theme"></style>
     <style>
+      :host #container {
+        display: table;
+        margin: 0 auto;
+      }
 
-        #choiceTable > div > div{
-            border: solid 1px grey;
-            padding:5px;
-            vertical-align: middle;
-            font-size: 12px;
-            width: 20%;
-        }
+      :host #leftPanel {
+        display: table-cell;
+      }
 
+      :host #rightPanel {
+        display: table-cell;
+        opacity: 0;
+        -webkit-transition: opacity .25s ease-in-out;
+        -moz-transition: opacity .25s ease-in-out;
+        -ms-transition: opacity .25s ease-in-out;
+        -o-transition: opacity .25s ease-in-out;
+        transition: opacity .25s ease-in-out;
+      }
+
+      :host #editor {
+        display: block;
+        width: 800px;
+        height: 400px;
+        font-family: "Courier New", Courier, monospace;
+      }
+
+      :host #editor * {
+        display: block;
+        width: 800px;
+        height: 400px;
+        font-family: "Courier New", Courier, monospace;
+        resize: none;
+      }
+
+      :host #textEditor {
+        margin-top: -400px;
+      }
+
+      :host #textPreview {
+        color: rgba(255, 0, 0, 1);
+      }
+
+      :host #errorContainer {
+        width: 1000px;
+        margin: 0 auto;
+        opacity: 0;
+        -webkit-transition: opacity .25s ease-in-out;
+        -moz-transition: opacity .25s ease-in-out;
+        -ms-transition: opacity .25s ease-in-out;
+        -o-transition: opacity .25s ease-in-out;
+        transition: opacity .25s ease-in-out;
+      }
+
+      :host #expected {
+        width: 200px;
+        display: block;
+      }
+
+      :host .expected {
+        width: 100%;
+        padding: 0.2em 1em 0.2em 1em;
+      }
+
+      :host .activePanel{
+        background-color: #35ccbf;
+      }
     </style>
 
-    <textarea style="display: block; margin: 0 auto; width: 1000px" id='requestTextArea'></textarea>
-    <pre style="display: block; margin: 0 auto; max-width: 1000px; width: 1000px" id='requestResultDiv'></pre>
-    <div on-click="_sendRequest" class="button"> OK </div>
-    <div style="margin: 0 auto; width: 1000px;">
-        <yasgui-component id="yc"></yasgui-component>
-    </div>
+    <div style="display:table; margin: 0 auto; width: 1000px; table-layout:fixed">
+      <div style="display:table-row">
+        <div style="display:table-cell; width: 50%">
+          <div id="showEditorBtn" on-click="_showEditor" class="button activePanel" style="width: 100%; padding; 1em"> EDITOR MODE </div>
+        </div>
+        <div style="display:table-cell; width: 50%">
+          <div id="showRequestBtn" on-click="_showRequest" class="button" style="width: 100%; padding; 1em"> REQUEST MODE </div>
+        </div>
+      </div>
+      <div style="display:table-row">
+        <iron-pages selected="{{_mode}}">
+          <div>
+            <div id="container">
+              <div id="leftPanel">
+                <div id="editor">
+                  <textarea id="textPreview" style="background-color:transparent"></textarea>
+                  <textarea spellcheck="false" id="textEditor"></textarea>
+                </div>
+              </div>
+              <div id="rightPanel">
+                <div id="expected">
+                  <div class="expected" style="border-bottom: solid 1px grey"> Expected </div>
+                  <template is="dom-repeat" items="{{_expected}}">
+                    <div class="expected"> {{item}} </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+            <div id="errorContainer">
+              <iron-icon class="fgRed" icon="icons:error"></iron-icon>
+              <span class="fgRed" id="errorMessage"></span>
+            </div>
+          </div>
+          <div style="width: 1000px; height: 400px; margin: 0 auto">
+            <textarea style="width: 1000px; height: 400px;" id="requestTarget">
+            </textarea>
+          </div>
+        </iron-pages>
+      </div>
+
+
+      <pre style="display: block; margin: 0 auto; max-width: 1000px; width: 1000px" id='requestResultDiv'></pre>
+      <div on-click="_sendRequest" class="button"> OK </div>
+
+      <div style="margin: 0 auto; width: 1000px;">
+        <yasgui-component id="yc" end-point="{{_endPoint}}"></yasgui-component>
+      </div>
   </template>
 
 
-<script>
+  <script>
+    Polymer({
 
-Polymer({
+      is: 'taaabs-spare',
 
-    is: 'taaabs-spare',
-
-    properties: {
+      properties: {
 
         /**
          * The current route
          */
         language: {
-            type: String,
-            notify: true,
-            observer: "_languageChanged"
+          type: String,
+          notify: true,
+          observer: "_languageChanged"
         },
 
-
         i18n: {
-            type: String,
-            value: {
-                "home":{
-                    "default":"Home",
-                    "en":"Home",
-                    "fr":"Accueil"
-                },
-                "hello":{
-                    "default":"Hello",
-                    "en":"Hello",
-                    "fr":"Bonjour"
-                }
+          type: String,
+          value: {
+            "home": {
+              "default": "Home",
+              "en": "Home",
+              "fr": "Accueil"
             },
-            notify: true
+            "hello": {
+              "default": "Hello",
+              "en": "Hello",
+              "fr": "Bonjour"
+            }
+          },
+          notify: true
+        },
+
+        traceUrl: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+
+        _trace: {
+          type: Object,
+          notify: true,
+          value: null,
+          observer: '_traceChanged'
+        },
+
+        _endPoint: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+
+        _mode: {
+          type: Number,
+          notify: true,
+          value: 0
+        },
+
+        _expected: {
+          type: Array,
+          notify: true,
+          value: []
         }
 
-    },
+      },
 
-    listeners: {
-        'requestTextArea.keyup' : '_requestTextAreaKeyUp'
-    },
+      listeners: {
+        'textEditor.keyup': '_textEditor'
+      },
 
-    ready: function(){
-        parserCLN.trace_modelURI = "https://liris-ktbs01.insa-lyon.fr:8000/hubble/baseTestRemi/_M0";
-    },
+      ready: function() {
 
-    _languageChanged: function(){
-        for(var prop in this.i18n) {
-            var tmp = "i18n."+prop+".default";
-            this.set(tmp, this.i18n[prop][this.language]);
+      },
+
+      _languageChanged: function() {
+        for (var prop in this.i18n) {
+          var tmp = "i18n." + prop + ".default";
+          this.set(tmp, this.i18n[prop][this.language]);
         }
-    },
+      },
 
-    _requestTextAreaKeyUp: function(e){
+      refresh: function(){
+        if( this.traceUrl !== ""){
+          this.fire('GET_RESOURCE', {url:this.traceUrl, obj:"_trace"});
+          this.set('_endPoint', this.traceUrl+"@obsels");
+        }
+      },
+
+      _traceChanged: function(){
+        if( this._trace ){
+          parserCLN.trace_modelURI = this._trace.model_uri;
+        }
+      },
+
+      _textEditor: function(e) {
+
+        this.$.textPreview.value = "";
+        this.set('_expected', []);
+
         e.preventDefault();
         try {
-          /*
-           var result = parserCLN.parse(this.$.requestTextArea.value);
 
-           this.$.yc.refresh( result );
-           */
+          var result = parserCLN.parse(this.$.textEditor.value);
+          this.$.errorContainer.style.opacity = 0;
+          this.$.rightPanel.style.opacity = 0;
+
+
+        } catch (e) {
+
+          this.$.errorContainer.style.opacity = 1;
+          this.$.rightPanel.style.opacity = 1;
+
+          for (var i = 0; i < e.location.start.line; i++) {
+            this.$.textPreview.value += '\n';
+          }
+          for (i = 1; i < e.location.start.column; i++) {
+            this.$.textPreview.value += ' ';
+          }
+          this.$.textPreview.value += '^';
+
+
+          for (i = 0; i < e.expected.length; i++) {
+            if (e.expected[i].value !== "[ \\n\\r\\t]")
+              this.push('_expected', e.expected[i].value);
+          }
+
+          this.$.errorMessage.textContent = '(line ' + e.location.start.line + ', column ' + e.location.start.column + ') ';
+          this.$.errorMessage.textContent += e.message;
         }
-        catch (e) {
-           this.$.requestResultDiv.textContent = e;
+      },
+
+      _sendRequest: function() {
+        this.$.yc.refresh(this.$.requestTarget.value);
+      },
+
+      _showEditor: function() {
+        this.set('_mode', 0);
+        this.$.showEditorBtn.classList.add('activePanel');
+        this.$.showRequestBtn.classList.remove('activePanel');
+      },
+
+      _showRequest: function() {
+        this.$.showEditorBtn.classList.remove('activePanel');
+        this.$.showRequestBtn.classList.add('activePanel');
+        try {
+
+          var result = parserCLN.parse(this.$.textEditor.value);
+          this.$.requestTarget.value = result;
+          this.set('_mode', 1);
+
+
+        } catch (e) {
+          this.$.requestTarget.value = e;
+          this.set('_mode', 1);
         }
-    },
 
-    _sendRequest: function(){
-      var result = parserCLN.parse(this.$.requestTextArea.value);
+      }
 
-      this.$.yc.refresh( result );
-    }
-
-});
-</script>
+    });
+  </script>
 
 </dom-module>
