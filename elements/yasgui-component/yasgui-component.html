@@ -59,7 +59,7 @@
 
         console.log( response );
 
-        var response = response || this._response;
+        var response = response.responseJSON || this._response;
 
         this._yasr.setResponse(response);
         this._yasr.draw();
