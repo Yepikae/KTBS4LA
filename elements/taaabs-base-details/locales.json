@@ -1,0 +1,24 @@
+{
+    "en": {
+      "baseInformations": "Base details",
+      "storedTraces": "Stored traces",
+      "computedTraces": "Computed traces",
+      "traceModels": "Trace models",
+      "editIcon": "Edit",
+      "editCancelIcon": "Cancel",
+      "editSubmitIcon": "Submit",
+      "delete": "Delete",
+      "deleteConfirm": "Do you want to permanently remove"
+    },
+    "fr": {
+      "baseInformations": "Informations sur la base",
+      "storedTraces": "Traces primaires",
+      "computedTraces": "Traces transformées",
+      "traceModels": "Modèles de trace",
+      "editIcon": "Éditer",
+      "editCancelIcon": "Annuler",
+      "editSubmitIcon": "Valider",
+      "delete": "Supprimer",
+      "deleteConfirm": "Voulez-vous supprimer définitivement"
+    }
+}

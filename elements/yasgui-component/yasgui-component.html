@@ -1,7 +1,5 @@
 <link rel="import" href="yasgui-theme.html">
 <dom-module id="yasgui-component">
-  <script type="text/javascript" src="yasgui.min.js"></script>
-
   <template>
     <style include="yasgui-theme"></style>
     <div id="showcase"></div>
@@ -68,10 +66,15 @@
 
       _endPointChanged: function(){
         if(this.endPoint !== "")
+          this._yasqe.options.sparql.endpoint = "http://dbpedia.org/sparql";
+        /*
+        if(this.endPoint !== "")
           this._yasqe.options.sparql.endpoint = this.endPoint;
+        */
+
       }
 
     });
   </script>
-
 </dom-module>
+<script type="text/javascript" src="yasgui.min.js"></script>

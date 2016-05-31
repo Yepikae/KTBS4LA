@@ -1,0 +1,12 @@
+{
+    "en": {
+      "textEditor": "Type here your request. It would probably begin with an 'I'.",
+      "editorMode": "EDITOR MODE",
+      "requestMode": "REQUEST MODE"
+    },
+    "fr": {
+      "textEditor": "Entrez ici votre requête. Elle commence probablement par un 'Je'.",
+      "editorMode": "MODE ÉDITEUR",
+      "requestMode": "MODE REQUÊTE"
+    }
+}

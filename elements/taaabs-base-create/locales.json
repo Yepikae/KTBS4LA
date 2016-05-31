@@ -1,0 +1,34 @@
+{
+    "en": {
+      "title": "Create a new base",
+      "sourceUrl": "Root name",
+      "baseId": "Name",
+      "baseLabel": "Label",
+      "baseDescription": "Description",
+      "idPH": "The base name must be unique.",
+      "labelPH": "A short description of your base.",
+      "descriptionPH": "A more detailed description of your base.",
+      "editCancelIcon": "Cancel",
+      "editSubmitIcon": "Submit",
+      "invalidMsg": "Invalid name",
+      "_eEmptyId": "Name is empty",
+      "_eExistsId": "Name already exists",
+      "_eWrongChar": "Forbidden char : '/', '.' or space"
+    },
+    "fr": {
+      "title": "Créer une nouvelle base",
+      "sourceUrl": "Nom de la racine",
+      "baseId": "Nom",
+      "baseLabel": "Label",
+      "baseDescription": "Description",
+      "idPH": "Le nom de la base doit être unique.",
+      "labelPH": "Une courte description de la base.",
+      "descriptionPH": "Une description plus détaillée de la base.",
+      "editCancelIcon": "Annuler",
+      "editSubmitIcon": "Valider",
+      "invalidMsg": "Nom invalide",
+      "_eEmptyId": "Aucun nom entré",
+      "_eExistsId": "Le nom existes déjà",
+      "_eWrongChar": "Caractère interdit : '/', '.' ou espace"
+    }
+}

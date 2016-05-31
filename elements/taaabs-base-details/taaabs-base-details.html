@@ -64,28 +64,58 @@
         opacity: 1;
       }
 
-      #editSubmitIcon{
-        color: #87D37C;
-      }
-
-      #editCancelIcon{
-        color: #ef5e4a;
-      }
-
       .baseLine:hover{
         cursor: pointer;
         background-color: #2e3842;
         color: white;
       }
 
+      :host #bgModal{
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0,0,0,0.37);
+        opacity: 0;
+        pointer-events: none;
+
+        -webkit-transition: opacity .3s ease-in-out;
+        -moz-transition: opacity .3s ease-in-out;
+        -ms-transition: opacity .3s ease-in-out;
+        -o-transition: opacity .3s ease-in-out;
+        transition: opacity .3s ease-in-out;
+      }
+
+      :host #contentModal{
+        position: absolute;
+        top: 50vh;
+        margin-top: -200px;
+        left: 50vw;
+        margin-left: -300px;
+        width: 600px;
+        height: 400px;
+        padding: 1em;
+      }
+
     </style>
 
-    <h3> <span>{{i18n.baseInformations.default}} : <span>{{_base.id}}</span> </h3>
+    <div id="bgModal">
+      <div id="contentModal" class="bgWhite">
+        <iron-pages selected="{{_modalIndex}}">
+          <div>
+            <taaabs-base-create id="tbc" source="[[_base]]" language="{{language}}" in-base></taaabs-base-create>
+          </div>
+        </iron-pages>
+      </div>
+    </div>
+
+    <h3> <span>{{localize('baseInformations')}} : <span>{{_base.id}}</span> </h3>
 
     <div id="modes">
       <div id="visuMode">
 
-        <iron-icon icon="icons:create" title="{{i18n.editIcon.default}}" class="editIcons" id="editIcon"></iron-icon>
+        <iron-icon icon="icons:create" title="{{localize('editIcon')}}" class="editIcons" id="editIcon"></iron-icon>
         <dl>
           <dt> Url </dt>
           <dd> <a href="{{_base.uri}}" target="_blank"><span>{{_base.uri}}</span></a></dd>
@@ -99,8 +129,8 @@
 
       <div id="editMode">
 
-        <iron-icon icon="icons:close" class="editIcons" title="{{i18n.editCancelIcon.default}}" id="editCancelIcon"></iron-icon>
-        <iron-icon icon="icons:check" class="editIcons" title="{{i18n.editSubmitIcon.default}}" id="editSubmitIcon"></iron-icon>
+        <iron-icon icon="icons:close" class="editIcons fgRed fgRedH" title="{{localize('editCancelIcon')}}" id="editCancelIcon"></iron-icon>
+        <iron-icon icon="icons:check" class="editIcons fgGreen fgGreenH" title="{{localize('editSubmitIcon')}}" id="editSubmitIcon"></iron-icon>
         <dl>
           <dt> Url </dt>
           <dd> <a href="{{_base.uri}}" target="_blank"><span>{{_base.uri}}</span></a></dd>
@@ -112,14 +142,31 @@
       </div>
     </div>
 
+    <iron-icon style="float:right; cursor: pointer;padding-bottom:5px" class="fgDarkBlue fgDarkBlueH" icon="icons:add-circle-outline" on-click="_createBase"></iron-icon>
+    <h4 style="margin-bottom: 0px">Bases</h4>
+    <table>
+      <tr>
+        <th> Id </th><th> Label </th><th> Description </th> <th></th>
+      </tr>
+      <template is="dom-repeat" items="{{_bases}}">
+        <tr class="baseLine">
+          <td on-click="_baseClicked" > <span>{{item.id}}</span> </td>
+          <td on-click="_baseClicked" >  <span>{{item.label}}</span> </td>
+          <td on-click="_baseClicked" > <span>{{item.comment}}</span> </td>
+          <td style="width:15px">
+            <iron-icon on-click='_deleteResource' icon="icons:delete" title="{{localize('delete')}}" class="fgWhite" style="height: 15px;"></iron-icon>
+          </td>
+        </tr>
+      </template>
+    </table>
 
-    <h4> <span>{{i18n.storedTraces.default}} </span> </h4>
+    <h4> <span>{{localize('storedTraces')}}</span> </h4>
 
     <table>
       <tr>
-        <th> Id </th><th> Label </th><th> Notes </th>
+        <th> Id </th><th> Label </th><th> Description </th>
       </tr>
-      <template is="dom-repeat" items="{{_traces}}">
+      <template is="dom-repeat" items="{{_storedTraces}}">
         <tr resid="{{item.uri}}" on-click="_traceClicked" class="baseLine">
           <td> <span>{{item.id}}</span> </td>
           <td> <span>{{item.label}}</span> </td>
@@ -128,15 +175,15 @@
       </template>
     </table>
 
-    <h4> <span>{{i18n.transformedTraces.default}} </span> </h4>
+    <h4> <span>{{localize('computedTraces')}}</span> </h4>
 
 
 
     <table>
       <tr>
-        <th> Id </th><th> Label </th><th> Notes </th>
+        <th> Id </th><th> Label </th><th> Description </th>
       </tr>
-      <template is="dom-repeat" items="{{_tTraces}}">
+      <template is="dom-repeat" items="{{_computedTraces}}">
         <tr resid="{{item.id}}" on-click="_tTraceClicked" class="baseLine">
           <td> <span>{{item.id}}</span> </td>
           <td> <span>{{item.label}}</span> </td>
@@ -145,13 +192,13 @@
       </template>
     </table>
 
-    <h4> <span>{{i18n.models.default}} </span> </h4>
+    <h4> <span>{{localize('traceModels')}}</span> </h4>
 
     <table>
       <tr>
-        <th> Id </th><th> Label </th><th> Notes </th>
+        <th> Id </th><th> Label </th><th> Description </th>
       </tr>
-      <template is="dom-repeat" items="{{_models}}">
+      <template is="dom-repeat" items="{{_traceModels}}">
         <tr resid="{{item.id}}" on-click="_modelClicked" class="baseLine">
           <td> <span>{{item.id}}</span> </td>
           <td> <span>{{item.label}}</span> </td>
@@ -235,21 +282,13 @@
           observer: '_baseChanged'
         },
 
-
-        _tmpResource: {
-          type: Object,
-          notify: true,
-          value: null,
-          observer: '_tmpResourceChanged'
-        },
-
         /**
         * The stored traces of the base.
         *
-        * @attribute _traces
+        * @attribute _storedTraces
         * @type Array
         */
-        _traces: {
+        _storedTraces: {
           type: Array,
           notify: true,
           value: function(){
@@ -258,12 +297,27 @@
         },
 
         /**
-        * The computed traces of the base.
+        * The bases of the base.
         *
-        * @attribute _tTraces
+        * @attribute _bases
         * @type Array
         */
-        _tTraces: {
+        _bases: {
+          type: Array,
+          notify: true,
+          value: function(){
+            return [];
+          }
+        },
+
+
+        /**
+        * The computed traces of the base.
+        *
+        * @attribute _computedTraces
+        * @type Array
+        */
+        _computedTraces: {
           type: Array,
           notify: true,
           value: function(){
@@ -274,10 +328,10 @@
         /**
         * The models of the base.
         *
-        * @attribute _models
+        * @attribute _traceModels
         * @type Array
         */
-        _models: {
+        _traceModels: {
           type: Array,
           notify: true,
           value: function(){
@@ -285,58 +339,23 @@
           }
         },
 
+        /**
+        * Index of the page of the modal div.
+        * 0 for base creation page, etc.
+        *
+        * @attribute _modalIndex
+        * @type Number
+        */
+        _modalIndex: {
+          type: Number,
+          notify: true,
+          value: 0
+        },
+
         taaabsCentralLoading: {
           type: Boolean,
           notify: true,
           value: false
-        },
-
-        /**
-        * Localization object.
-        *
-        * @attribute i18n
-        * @type Object
-        */
-		    i18n: {
-            type: Object,
-            value: {
-				      "baseInformations" :{
-                "default": "Base details",
-                "en": "Base details",
-                "fr": "Informations sur la base"
-              },
-              "storedTraces" :{
-                "default": "Stored traces",
-                "en": "Stored traces",
-                "fr": "Traces primaires"
-              },
-              "transformedTraces" :{
-                "default": "Transformed traces",
-                "en": "Transformed traces",
-                "fr": "Traces transformées"
-              },
-              "models" :{
-                "default": "Models",
-                "en": "Models",
-                "fr": "Modèles"
-              },
-              "editIcon": {
-                "default": "Edit",
-                "en": "Edit",
-                "fr": "Éditer"
-              },
-              "editCancelIcon": {
-                "default": "Cancel",
-                "en": "Cancel",
-                "fr": "Annuler"
-              },
-              "editSubmitIcon": {
-                "default": "Submit",
-                "en": "Submit",
-                "fr": "Valider"
-              }
-            },
-            notify: true
         },
 
         /**
@@ -349,29 +368,62 @@
         language: {
             type: String,
             notify: true,
-            observer: "_languageChanged"
         },
 
       },
 
 
-        listeners:{
-          'loadResource': '_loadResource',
-          'editIcon.click': '_switchToEditMode',
-          'editCancelIcon.click': '_switchToNotEditMode',
-          'editSubmitIcon.click': '_submitBaseChanges'
-        },
-
-
-      _languageChanged: function(){
-        for(var prop in this.i18n) {
-          var tmp = "i18n."+prop+".default";
-          this.set(tmp, this.i18n[prop][this.language]);
-        }
+      listeners:{
+        'loadResource': '_loadResource',
+        'editIcon.click': '_switchToEditMode',
+        'editCancelIcon.click': '_switchToNotEditMode',
+        'editSubmitIcon.click': '_submitBaseChanges'
       },
+
+      behaviors: [
+        Polymer.AppLocalizeBehavior
+      ],
 
       ready: function(){
 
+      },
+
+      attached: function(){
+        // Load i18n json.
+        this.loadResources(this.resolveUrl('./locales.json'));
+
+        var that = this;
+
+        this.$.tbc.addEventListener('BASE_CREATED', function(){
+          that.fire('RESOURCE_CHANGED');
+          that.$.bgModal.style.opacity = 0;
+          that.$.bgModal.style.pointerEvents = "none";
+          window.scrollTo(0,0);
+        });
+        this.$.tbc.addEventListener('CANCEL', function(){
+          that.$.bgModal.style.opacity = 0;
+          that.$.bgModal.style.pointerEvents = "none";
+          window.scrollTo(0,0);
+        });
+
+
+      },
+
+      /**
+      * Triggered when a base is clicked.
+      * Fires `resourceSelected`.
+      *
+      * @param {!required} e The click event
+      *
+      * @method _baseClicked
+      */
+      _baseClicked: function(e){
+        var obj = {
+          "resourceURL": this._base.uri + e.model.item.id,
+          "resourceType": "Base",
+          "which":e.which
+        }
+        this.fire('resourceSelected', obj)
       },
 
       /**
@@ -423,15 +475,11 @@
       * @method _traceClicked
       */
       _traceClicked: function(e){
-        var tr = e.target;
-        while(tr.localName !== 'tr')
-          tr = tr.parentNode;
         var obj = {
-          "resourceURL": tr.resid,
+          "resourceURL": this._base.uri + e.model.item.id,
           "resourceType": "StoredTrace",
           "which":e.which
         }
-        console.log(obj);
         this.fire('resourceSelected', obj)
       },
 
@@ -470,8 +518,9 @@
 
         var obj = [
           ["label", this._baseLabel],
-          ["rdfs:comment", this._baseComment]
+          ["http://www.w3.org/2000/01/rdf-schema#comment", [this._baseComment] ]
         ];
+
         this._base.modify_attributes( obj ).then( function(response){
 
             that.set('_base.label', that._base['label']);
@@ -494,68 +543,46 @@
       * @method _baseURLchanged
       */
       _baseURLchanged: function(){
-        this.set('_traces',[]);
-        this.set('_tTraces',[]);
-        this.set('_models',[]);
+        this.set('_storedTraces',[]);
+        this.set('_computedTraces',[]);
+        this.set('_traceModels',[]);
         var that = this;
-      },
-
-      _tmpResourceChanged: function(){
-        if( this._tmpResource ){
-          var resource = this._tmpResource;
-          switch(resource['type']){
-            case 'StoredTrace':
-              resource.id = resource.id.split('/');
-              resource.id = resource.id[ resource.id.length - 2 ];
-              this.push('_traces', resource);
-            break;
-            case 'ComputedTrace':
-              resource.id = resource.id.split('/');
-              resource.id = resource.id[ resource.id.length - 2 ];
-              this.push('_tTraces', resource);
-            break;
-            case 'TraceModel':
-              resource.id = resource.id.split('/');
-              if( resource.id[ resource.id.length -1 ] !== "")
-                resource.id = resource.id[ resource.id.length - 1 ];
-              else
-                resource.id = resource.id[ resource.id.length - 2 ];
-              this.push('_models', resource);
-            break;
-          }
-        }
       },
 
       _baseChanged: function(){
         if( this._base ){
-          var id = this._base.uri.split('/');
-          id = id[id.length - 2];
-
-          this.set('_base.id', id);
-
-          this.set('_base.label', this._base['label']);
-          this.set('_baseLabel', this._base['label']);
-
-          this.set('_base.comment', this._base['comment']);
-          this.set('_baseComment', this._base['comment']);
-
           var that = this;
+          this._base.load_properties(['label','comment'])
+            .then( function(resources){
+              that._setResources(resources);
+            })
+            .catch( function(err){
+              console.log(err);
+            })
+          }
+      },
 
-          this._base.iter_stored_traces()
-              .forEach( function( trace ){
-                that.fire('GET_RESOURCE', {url:trace.uri, obj:"_tmpResource"});
-              })
-              .catch( function(err){ console.log(err); })
-          that._base.iter_computed_traces()
-              .forEach( function( trace ){
-                that.fire('GET_RESOURCE', {url:trace.uri, obj:"_tmpResource"});
-              })
-              .catch( function(err){ console.log(err); })
-          that._base.iter_models()
-              .forEach( function( model ){
-                that.fire('GET_RESOURCE', {url:model.uri, obj:"_tmpResource"});
-              })
-              .catch( function(err){ console.log(err); })
+      _setResources: function(resources){
+        for(var i in resources){
+          resources[i]['id'] = resources[i]['@id'];
+          //TODO Replace Array position by real String.
+          if( resources[i]['rdf:comments'] )
+            resources[i]['comment'] = resources[i]['rdf:comments'][0];
+
+          switch(resources[i]['@type']){
+            case 'Base':
+              this.push('_bases', resources[i]);
+            break;
+            case 'StoredTrace':
+              this.push('_storedTraces', resources[i]);
+            break;
+            case 'ComputedTrace':
+              this.push('_computedTraces', resources[i]);
+            break;
+            case 'TraceModel':
+              this.push('_traceModels', resources[i]);
+            break;
+          }
         }
       },
 
@@ -565,177 +592,37 @@
       * @method refresh
       */
       refresh: function(){
+        this.set('_base', null);
+        this.set('_bases', []);
+        this.set('_storedTraces', []);
+        this.set('_computedTraces', []);
+        this.set('_traceModels', []);
         if( this.taaabsCentralLoading )
           this.fire('GET_RESOURCE', {url:this.baseUrl, obj:"_base"});
-        else{
+        //TODO Complete with no taaabsCentralLoading option.
+      },
+
+      _deleteResource: function(e){
+        if (window.confirm(this.localize('deleteConfirm') + " " + e.model.item['@id'] + " ?" )) {
           var that = this;
-
-          this._base.load()
-              .then( function(){
-                var id = that._base.uri.split('/');
-                id = id[id.length - 2];
-
-                that.set('_base.id', id);
-
-                that.set('_base.label', that._base['label']);
-                that.set('_baseLabel', that._base['label']);
-
-                that.set('_base.comment', that._base['comment']);
-                that.set('_baseComment', that._base['comment']);
-
-                that._base.iter_stored_traces()
-                          .forEach( function( trace ){
-                            trace.load()
-                                 .then( function(){
-                                  trace.id = trace.id.split('/');
-                                  trace.id = trace.id[ trace.id.length - 2 ];
-                                  that.push('_traces', trace);
-                                 })
-                                 .catch( function(err){
-                                  console.log(err);
-                                 })
-
-                          })
-                          .then( function(){
-
-                          })
-                          .catch( function(err){
-                            console.log(err);
-                          })
-                that._base.iter_computed_traces()
-                          .forEach( function( trace ){
-                            trace.load()
-                                 .then( function(){
-                                  trace.id = trace.id.split('/');
-                                  trace.id = trace.id[ trace.id.length - 2 ];
-                                  that.push('_tTraces', trace);
-                                 })
-                                 .catch( function(err){
-                                  console.log(err);
-                                 })
-
-                          })
-                          .then( function(){
-
-                          })
-                          .catch( function(err){
-                            console.log(err);
-                          })
-                that._base.iter_models()
-                          .forEach( function( model ){
-                            model.load()
-                                 .then( function(){
-                                  console.log(model);
-                                  model.id = model.id.split('/');
-                                  if( model.id[ model.id.length -1 ] !== "")
-                                    model.id = model.id[ model.id.length - 1 ];
-                                  else
-                                    model.id = model.id[ model.id.length - 2 ];
-                                  that.push('_models', model);
-                                 })
-                                 .catch( function(err){
-                                  console.log(err);
-                                 })
-
-                          })
-                          .then( function(){
-
-                          })
-                          .catch( function(err){
-                            console.log(err);
-                          })
-
-              })
-              .catch( function(err){
-                console.log(err);
-              })
+          var res = new Samotraces.Ktbs.Resource( this._base.uri + e.model.item['@id']  );
+          console.log(res);
+          res.remove()
+            .then( function(msg){
+              console.log( msg );
+              that.fire('RESOURCE_CHANGED');
+            })
+            .catch( function(err){
+              console.log(err);
+            })
         }
       },
 
-      /**
-      * Load the resources of the base.
-      *
-      * @param {!required} e An object containing some informations...
-      *
-      * @method _loadResource
-      */
-      _loadResource: function(e){
-
-        if(e.detail.index < e.detail.resources.length){
-          var resID =  e.detail.resources[e.detail.index]['@id'].split('/');
-          var res = undefined;
-
-          if( e.detail.resources[e.detail.index]['@type'] === "StoredTrace" ){
-            this._loadTrace(e, resID);
-          }
-          else if( e.detail.resources[e.detail.index]['@type'] === "TraceModel" ){
-            this._loadModel(e, resID);
-          }
-        }
-
+      _createBase: function(){
+        this.$.bgModal.style.opacity = 1;
+        this.$.bgModal.style.pointerEvents = "auto";
+        window.scrollTo(0,0);
       },
-
-
-      _loadTrace: function(e, resID){
-
-        var that = this;
-
-        resID = resID[resID.length - 2] + '/';
-        var res = new Samotraces.Ktbs.Trace(this._base.uri+resID);
-
-        res.force_state_refresh({'_on_state_refresh_': true}, function(resource) {
-
-          res = that._getResourceDatas(res, resource);
-
-          that.push('_traces', res);
-
-          e.detail.index = e.detail.index + 1
-          that.fire('loadResource',e.detail);
-
-        }, function (error) {
-          console.log('This base doesn\'t exists.');
-          console.log(error);
-        });
-      },
-
-      _loadModel: function(e, resID){
-
-        var that = this;
-
-        resID = resID[resID.length - 1];
-        var res = new Samotraces.Ktbs.Model(this._base.uri+resID);
-
-        res.force_state_refresh({'_on_state_refresh_': true}, function(resource) {
-
-          var graph = resource['@graph'];
-          var i = 0;
-          while(graph[i]['@type'] !== "TraceModel" && i < graph.length){
-            i++;
-          }
-
-          res = that._getResourceDatas(res, graph[i]);
-
-          that.push('_models', res);
-
-          e.detail.index = e.detail.index + 1
-          that.fire('loadResource',e.detail);
-
-        }, function (error) {
-          console.log('This base doesn\'t exists.');
-          console.log(error);
-        });
-      },
-
-      _getResourceDatas: function(res, resource){
-
-        var id = res.uri.split('/');
-        id = id[id.length - 2];
-        res.id = id;
-        res.label = resource.label;
-        res.comment = resource['comment'];
-
-        return res;
-      }
 
     });
   </script>

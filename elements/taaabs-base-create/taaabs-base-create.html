@@ -1,0 +1,333 @@
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<dom-module id="taaabs-base-create">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      :host .editIcons{
+        float:right;
+        cursor: pointer;
+      }
+
+      :host #container{
+        display: table;
+        table-layout: fixed;
+        width: 100%;
+      }
+
+      :host .row{
+        display: table-row;
+        width: 100%;
+      }
+
+      :host .cell{
+        display: table-cell;
+      }
+
+      :host #errorMsg{
+        width: 100%;
+      }
+
+    </style>
+
+    <iron-pages selected="{{_pageIndex}}">
+      <div>
+        <iron-icon icon="icons:close"
+          class="editIcons fgRed fgRedH"
+          title="{{localize('editCancelIcon')}}"
+          on-click="_cancel"></iron-icon>
+        <iron-icon
+          icon="icons:check"
+          class="editIcons fgGreen fgGreenH"
+          id='validIcon'
+          title="{{localize('editSubmitIcon')}}"
+          on-click="_submit"></iron-icon>
+        <h4> {{localize('title')}} </h4>
+        <div id="container">
+          <div class="row">
+            <div class="cell" style="width: 30%">
+              {{localize('sourceUrl')}} :
+            </div>
+            <div class="cell" style="width: 70%">
+              {{_formatSourceUrl(source)}}
+            </div>
+          </div>
+          <div class="row">
+            <div class="cell" style="height: 2em; border-top: solid 1px grey"></div>
+            <div class="cell" style="height: 2em; border-top: solid 1px grey"></div>
+          </div>
+          <div class="row">
+            <div class="cell">
+              {{localize('baseId')}} :
+            </div>
+            <div class="cell" style="padding: 10px">
+              <input placeholder="{{localize('idPH')}}" class="inputWithIcon" style="outline:0" value="{{_baseId::input}}">
+                <iron-icon class="inputWithIconIcon fgDarkBlue" icon="icons:create"></iron-icon>
+              </input>
+            </div>
+          </div>
+          <div class="row">
+            <div class="cell">
+              {{localize('baseLabel')}} :
+            </div>
+            <div class="cell" style="padding: 10px">
+              <input placeholder="{{localize('labelPH')}}" class="inputWithIcon" style="outline:0" value="{{_baseLabel::input}}">
+                <iron-icon class="inputWithIconIcon fgDarkBlue" icon="icons:create"></iron-icon>
+              </input>
+            </div>
+          </div>
+          <div class="row">
+            <div class="cell">
+              {{localize('baseDescription')}} :
+            </div>
+            <div class="cell" style="padding: 10px">
+              <textarea  style="height:100px; width: 100%;"
+              placeholder="{{localize('descriptionPH')}}"
+              class="inputWithIcon"
+              value="{{_baseComment::input}}">
+            </textarea>
+            </div>
+          </div>
+        </div>
+        <div id="errorMsg" hidden$="{{!_invalidId}}" class="bgRed fgWhite">
+          <iron-icon icon="icons:error-outline" class="fgWhite"></iron-icon>
+          {{localize('invalidMsg')}} : {{_errorMsg}}.
+        </div>
+      </div>
+      <div>
+        Creating the base...
+      </div>
+      <div>
+        <p>
+          Base created !
+        </p>
+        <p>
+          <a href='{{_newBaseUrl}}' target='_blank'>{{_newBaseUrl}}</a>
+        </p>
+        <div class="button" on-click='_validate'>OK</div>
+      </div>
+    </div>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'taaabs-base-create',
+
+      properties: {
+
+        /**
+        * Either the future root ktbs, or the root base.
+        *
+        * @attribute source
+        * @type String
+        */
+        source: {
+          type: Object,
+          notify: true,
+          value: ""
+        },
+
+        /**
+        * Set to true if the new base will be created in an exisiting base.
+        * Set to false otherwise.
+        *
+        * @attribute inBase
+        * @type Boolean
+        */
+        inBase: {
+          type: Boolean,
+          notify: true,
+          value: false
+        },
+
+        //////////////////
+        // PROCESS VARS //
+        //////////////////
+
+        /**
+        * The future base Id.
+        *
+        * @attribute _baseId
+        * @type String
+        */
+        _baseId: {
+          type: String,
+          notify: true,
+          value: '',
+          observer: '_baseIdChanged'
+        },
+
+        /**
+        * The future base label.
+        *
+        * @attribute _baseLabel
+        * @type String
+        */
+        _baseLabel: {
+          type: String,
+          notify: true
+        },
+
+        /**
+        * The future base comment.
+        *
+        * @attribute _baseComment
+        * @type String
+        */
+        _baseComment: {
+          type: String,
+          notify: true,
+          value: ''
+        },
+
+        /**
+        * True if the base id is onvalid.
+        * False otherwise.
+        *
+        * @attribute _invalidId
+        * @type Boolean
+        */
+        _invalidId: {
+          type: Boolean,
+          notify: true,
+          value: true,
+          observer: '_invalidIdChanged'
+        },
+
+        /**
+        * Index of the current page.
+        *
+        * @attribute _pageIndex
+        * @type Number
+        */
+        _pageIndex: {
+          type: Number,
+          notify: true,
+          value: 0
+        },
+
+        /**
+        * Url of the created base.
+        *
+        * @attribute _newBaseUrl
+        * @type String
+        */
+        _newBaseUrl: {
+          type: String,
+          notify: true,
+          value: ''
+        },
+
+        //////////
+        // I18N //
+        //////////
+
+        /**
+        * Localization.
+        * fr, en.
+        *
+        * @attribute language
+        * @type String
+        */
+        language: {
+            type: String,
+            notify: true,
+        },
+      },
+
+      behaviors: [
+        Polymer.AppLocalizeBehavior
+      ],
+
+      ready: function(){},
+
+      attached: function(){
+        // Load i18n json.
+        this.loadResources(this.resolveUrl('./locales.json'));
+      },
+
+      /**
+      * Reset the base Id, label & comment.
+      *
+      * @method refresh
+      */
+      refresh: function(){
+        this.set('_baseId','');
+        this.set('_baseLabel','');
+        this.set('_baseComment','');
+      },
+
+      _baseIdChanged: function(){
+        if( this._baseId !== ''){
+          var exists = false;
+
+          if( this._baseId.search(/[\\\/\s\.]/) !== -1 ){
+            this.set('_invalidId', true);
+            this.set('_errorMsg', this.localize('_eWrongChar'));
+          }
+          else{
+            var resources = this.source.contains || this.source.hasBase;
+            for( var i in resources ){
+              var id = resources[i]['@id'] || resources[i];
+              id = id.replace(/[\/]/g,'');
+              if( id === this._baseId ){
+                exists = true;
+                this.set('_invalidId', true);
+                this.set('_errorMsg', this.localize('_eExistsId'));
+              }
+            }
+            if(!exists)
+              this.set('_invalidId', false);
+          }
+        }
+        else if( this.localize ){
+          this.set('_invalidId', true);
+          this.set('_errorMsg', this.localize('_eEmptyId'));
+        }
+      },
+
+      _formatSourceUrl: function(source){
+        if( source ){
+          var tmp = source.uri.split('/');
+          return tmp[tmp.length - 2]+'/';
+        }
+        return "";
+      },
+
+      _invalidIdChanged: function(){
+        if( this._invalidId ){
+          this.$.validIcon.style.pointerEvents = "none";
+          this.$.validIcon.style.opacity = 0.37;
+        }
+        else{
+          this.$.validIcon.style.pointerEvents = "auto";
+          this.$.validIcon.style.opacity = 1;
+        }
+      },
+
+      _cancel: function(){
+        this.fire('CANCEL');
+      },
+
+      _submit: function(){
+        this.set('_pageIndex', 1);
+        var that = this;
+        this.source.create_base( this._baseId, this._baseLabel, this._baseComment )
+          .then( function(base){
+            that.set('_newBaseUrl', base.id);
+            that.set('_pageIndex', 2);
+          })
+          .catch( function(err){
+            console.log(err);
+          })
+      },
+
+      _validate: function(){
+        this.fire('BASE_CREATED', {baseUrl: this._newBaseUrl});
+      }
+    });
+  </script>
+</dom-module>

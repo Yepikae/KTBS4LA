@@ -862,6 +862,8 @@
 
   			}
 
+        this.dragging = false;
+
         that._zlBeginPointer = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x - 0 ) + that._begin ) ;
 
         that._zlEndPointer = Math.floor( ( that._end - that._begin ) / ( that._stage._width - 0 ) * ( this.position.x  + this.width - 0 ) + that._begin ) ;
@@ -938,15 +940,69 @@
                                        0x4183D7);
       this._tlContainer.addChild(this._tlRectangle);
 
+      // TODO : virer ça jusqu'à ------
+
   		var x = this._tlBegin;
   		var y = this._tlEnd;
       var z = y - x;
 
-  		var originalDate = new Date(this._tlBegin);
-  		var dates = [];
+      // ------------------------
+
+
+      var originalDate = new Date(this._tlBegin);
 
       console.log( (new Date(x)).toDateString() +" "+ (new Date(y)).toDateString() );
 
+      var _ms = 1000;
+      var _interval_count = 10
+
+      var _time_interval = (( this._tlEnd - this._tlBegin ) / _ms) / _interval_count;
+
+      // TIME INTERVALS
+      var _seconds_in_minute = 60;
+      var _seconds_in_hour = 60*60;
+      var _seconds_in_day = 60*60*24;
+      var _seconds_in_week = 60*60*24*7;
+      var _seconds_in_month = 60*60*24*(365.25/12);
+      var _seconds_in_year = 60*60*24*365.25;
+      var _seconds_in_ = [_seconds_in_year, _seconds_in_month, _seconds_in_week, _seconds_in_day, _seconds_in_hour, _seconds_in_minute];
+
+      var i = 0;
+      while( i < _seconds_in_.length && _time_interval / _seconds_in_[i] < 1 )
+        i++;
+
+      var _right_interval = _seconds_in_[i] * _ms;
+
+      var _use_interval = _right_interval * ( _time_interval /  _seconds_in_[i] );
+      _use_interval = _use_interval - ( _use_interval % ( _seconds_in_[i] * _ms )) ;
+
+      var _rest = this._tlBegin  % _right_interval;
+      var _first_date = new Date( this._tlBegin - _rest );
+
+      var dates = [ { big: true, ds: _first_date.toLocaleDateString() + "  "+ _first_date.toLocaleTimeString(), dt: _first_date.getTime() }];
+
+      var _begin_tmp = new Date(this._tlBegin);
+      var _end_tmp = new Date(this._tlEnd);
+
+      var _pointer = dates[0].dt;
+
+      console.log(  _begin_tmp.toLocaleDateString() + "  "+ _begin_tmp.toLocaleTimeString());
+      var j = 1;
+      while( _pointer < this._tlEnd ){
+
+        var _tmp_date = new Date( dates[0].dt + j*_use_interval );
+        console.log(  _tmp_date.toLocaleDateString() + "  "+ _tmp_date.toLocaleTimeString());
+
+        dates.push( { big: true, ds: _tmp_date.toLocaleDateString() + "  "+ _tmp_date.toLocaleTimeString(), dt: dates[0].dt + j*_use_interval } );
+
+        _pointer = dates[0].dt + j*_use_interval;
+        j++;
+      }
+      console.log(  _end_tmp.toLocaleDateString() + "  "+ _end_tmp.toLocaleTimeString());
+
+      //TODO : Finir la mise en page des dates.
+
+/*
   		// If z <  10 minutes
   		if( z < 1000 * 60 * 10 ){
   			originalDate.setSeconds(0);
@@ -1074,7 +1130,7 @@
   		else{
   			alert('really? A trace over ten years?');
   		}
-
+*/
   		for( var i = 0; i < dates.length; i++){
   			var val = dates[i].dt;
   			var line = undefined;

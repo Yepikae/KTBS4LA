@@ -112,6 +112,16 @@
         return edge.id;
       },
 
+      setEdges: function( edges ){
+        var oldEdges = this._sigma.graph.edges();
+        for(var i in oldEdges){
+          this._sigma.graph.dropEdge( oldEdges[i] );
+        }
+        for( var i in edges ){
+          this._sigma.graph.addEdge( edges[i] );
+        }
+      },
+
       createEdge: function( source, target ){
         var edgeId = 'e'+this._sigma.graph.edges().length;
         this.addEdge({
@@ -126,6 +136,26 @@
         this.fire('NODE_CLICKED', {node: e.data.node});
       },
 
+      resetNodesColor: function( nodes ){
+        var _nodes = null;
+        if( nodes )
+          _nodes = this._sigma.graph.nodes( nodes );
+        else
+          _nodes = this._sigma.graph.nodes();
+        for( var i in _nodes ){
+          _nodes[i].color = _nodes[i].originalColor;
+        }
+        this._sigma.refresh();
+      },
+
+      deEmphasize: function( nodes ){
+        var _nodes = this._sigma.graph.nodes( nodes );
+        for( var i in _nodes ){
+          _nodes[i].color = '#555';
+        }
+        this._sigma.refresh();
+      },
+
       forceAtlas2: function( timeout ){
         this._sigma.startForceAtlas2();
         var that = this;
@@ -134,6 +164,7 @@
           function(){ that._sigma.stopForceAtlas2(); },
           timeout
         );
+
       }
 
     });

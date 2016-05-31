@@ -68,6 +68,16 @@
       :host .expected {
         width: 100%;
         padding: 0.2em 1em 0.2em 1em;
+        cursor: pointer;
+
+        -webkit-transition: background-color .25s ease-in-out;
+        -moz-transition: background-color .25s ease-in-out;
+        -ms-transition: background-color .25s ease-in-out;
+        -o-transition: background-color .25s ease-in-out;
+        transition: background-color .25s ease-in-out;
+      }
+      :host .expected:hover {
+        background-color: rgba(0,0,0,0.3);
       }
 
       :host .activePanel{
@@ -78,10 +88,10 @@
     <div style="display:table; margin: 0 auto; width: 1000px; table-layout:fixed">
       <div style="display:table-row">
         <div style="display:table-cell; width: 50%">
-          <div id="showEditorBtn" on-click="_showEditor" class="button activePanel" style="width: 100%; padding; 1em"> EDITOR MODE </div>
+          <div id="showEditorBtn" on-click="_showEditor" class="button activePanel" style="width: 100%; padding; 1em"> {{localize('editorMode')}} </div>
         </div>
         <div style="display:table-cell; width: 50%">
-          <div id="showRequestBtn" on-click="_showRequest" class="button" style="width: 100%; padding; 1em"> REQUEST MODE </div>
+          <div id="showRequestBtn" on-click="_showRequest" class="button" style="width: 100%; padding; 1em"> {{localize('requestMode')}} </div>
         </div>
       </div>
       <div style="display:table-row">
@@ -91,14 +101,14 @@
               <div id="leftPanel">
                 <div id="editor">
                   <textarea id="textPreview" style="background-color:transparent"></textarea>
-                  <textarea spellcheck="false" id="textEditor"></textarea>
+                  <textarea spellcheck="false" placeholder="{{localize('textEditor')}}" id="textEditor"></textarea>
                 </div>
               </div>
               <div id="rightPanel">
                 <div id="expected">
                   <div class="expected" style="border-bottom: solid 1px grey"> Expected </div>
                   <template is="dom-repeat" items="{{_expected}}">
-                    <div class="expected"> {{item}} </div>
+                    <div class="expected" on-click="_onExpectedItemClicked"> {{item}} </div>
                   </template>
                 </div>
               </div>
@@ -132,31 +142,23 @@
 
       properties: {
 
+        //////////
+        // I18N //
+        //////////
+
         /**
-         * The current route
+         * Localization.
+         * fr, en.
+         *
+         * @attribute language
+         * @type String
          */
         language: {
           type: String,
           notify: true,
-          observer: "_languageChanged"
         },
 
-        i18n: {
-          type: String,
-          value: {
-            "home": {
-              "default": "Home",
-              "en": "Home",
-              "fr": "Accueil"
-            },
-            "hello": {
-              "default": "Hello",
-              "en": "Hello",
-              "fr": "Bonjour"
-            }
-          },
-          notify: true
-        },
+
 
         traceUrl: {
           type: String,
@@ -187,9 +189,20 @@
           type: Array,
           notify: true,
           value: []
+        },
+
+        _model: {
+          type: Object,
+          notify: true,
+          value: null,
+          observer: '_onModelChanged'
         }
 
       },
+
+      behaviors: [
+        Polymer.AppLocalizeBehavior
+      ],
 
       listeners: {
         'textEditor.keyup': '_textEditor'
@@ -197,6 +210,15 @@
 
       ready: function() {
 
+      },
+
+      attached: function(){
+        // Load i18n json.
+        this.loadResources(this.resolveUrl('./locales.json'));
+
+        this.$.textEditor.addEventListener('keydown', function(e){
+          if(e.which == 9) { e.preventDefault(); }
+        })
       },
 
       _languageChanged: function() {
@@ -215,19 +237,27 @@
 
       _traceChanged: function(){
         if( this._trace ){
-          parserCLN.trace_modelURI = this._trace.model_uri;
+          parserCLN.trace_modelURI = this._trace.model_uri+'#';
+          this.fire('GET_RESOURCE', {url:this._trace.model_uri, obj:"_model"});
         }
       },
+
+      _onModelChanged: function(){},
 
       _textEditor: function(e) {
 
         this.$.textPreview.value = "";
         this.set('_expected', []);
 
-        e.preventDefault();
-        try {
+        var _which = null;
+        if(e){
+          e.preventDefault();
+          _which = e.which;
+        }
 
+        try {
           var result = parserCLN.parse(this.$.textEditor.value);
+
           this.$.errorContainer.style.opacity = 0;
           this.$.rightPanel.style.opacity = 0;
 
@@ -245,14 +275,29 @@
           }
           this.$.textPreview.value += '^';
 
+          //TODO: Remove when Spare grammar is ok
+          this._checkExpecteds(e.expected);
 
-          for (i = 0; i < e.expected.length; i++) {
-            if (e.expected[i].value !== "[ \\n\\r\\t]")
-              this.push('_expected', e.expected[i].value);
+          if( this.$.textEditor.value.search(/de type[\s]+$/) !== -1 )
+            for (i = 0; i < this._model.list_type_obsels.length; i++)
+              if (this._model.list_type_obsels[i]['@type'] === "ObselType")
+                this.push('_expected', this._model.list_type_obsels[i]['@id'].replace('#',''));
+
+          if (_which === 9) {
+           this._autoComplete();
           }
 
           this.$.errorMessage.textContent = '(line ' + e.location.start.line + ', column ' + e.location.start.column + ') ';
           this.$.errorMessage.textContent += e.message;
+        }
+      },
+
+      _checkExpecteds: function(expecteds){
+        for (i = 0; i < expecteds.length; i++) {
+          if( expecteds[i].value.search(/\[\.\]/) !== -1 )
+            this.push('_expected', '.');
+          else if(expecteds[i].value.search(/[\[\]<'"]/) === -1)
+            this.push('_expected', expecteds[i].value);
         }
       },
 
@@ -281,6 +326,45 @@
           this.set('_mode', 1);
         }
 
+      },
+
+      _onExpectedItemClicked: function(e){
+        var match = this.$.textEditor.value.match(/[A-zÀ-ú]+[\s]*$/);
+        if( match ){
+          var word = match[0].replace(/\s/g,'');
+          if( e.model.item.indexOf(word) !== -1 ){
+              this.$.textEditor.value = this.$.textEditor.value.slice(0, match['index']);
+          }
+        }
+
+        this.$.textEditor.value += e.model.item+" ";
+        this.$.textEditor.focus();
+        this._textEditor();
+      },
+
+      _autoComplete: function(){
+        var match = this.$.textEditor.value.match(/[A-zÀ-ú]+[\s]*$/);
+        var add = "";
+
+        if( match ){
+          var word = match[0];
+          for( var i = 0; i < this._expected.length; i++ ){
+            if( this._expected[i].indexOf(word) !== -1 ){
+                this.$.textEditor.value = this.$.textEditor.value.slice(0, match['index']);
+                add = this._expected[i];
+            }
+          }
+        }
+        if( add !== ""){
+          this.$.textEditor.value += add+" ";
+          this.$.textEditor.focus();
+          this._textEditor();
+        }
+        else{
+          this.$.textEditor.value += this._expected[0]+" ";
+          this.$.textEditor.focus();
+          this._textEditor();
+        }
       }
 
     });

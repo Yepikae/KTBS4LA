@@ -36,23 +36,31 @@
       }
     </style>
 
-    <div style="width:1000px; margin: 0 auto;">
+
+
+    <div>
+      <input placeholder="search" class="inputWithIcon bgDarkBlue fgWhite" style="outline:0" value="{{_searchNode::input}}">
+        <iron-icon class="inputWithIconIcon fgWhite" icon="icons:create"></iron-icon>
+      </input>
+    </div>
+
+    <div>
       <div id="legend">
         <iron-icon id="refreshIcon" on-click="refresh" icon='icons:autorenew'></iron-icon>
         <div>
-          <span>{{i18n.base.default}}</span>
+          <span>{{localize('base')}}</span>
           <iron-icon style="color:#F2784B; height: 16px; margin: 2px" icon='icons:radio-button-checked'></iron-icon>
         </div>
         <div>
-          <span>{{i18n.model.default}}</span>
+          <span>{{localize('model')}}</span>
           <iron-icon style="color:#F4D03F; height: 16px; margin: 2px" icon='icons:radio-button-checked'></iron-icon>
         </div>
         <div>
-          <span>{{i18n.ct.default}}</span>
+          <span>{{localize('ct')}}</span>
           <iron-icon style="color:#446CB3; height: 16px; margin: 2px" icon='icons:radio-button-checked'></iron-icon>
         </div>
         <div>
-          <span>{{i18n.st.default}}</span>
+          <span>{{localize('st')}}</span>
           <iron-icon style="color:#81CFE0; height: 16px; margin: 2px" icon='icons:radio-button-checked'></iron-icon>
         </div>
       </div>
@@ -84,7 +92,7 @@
 
         width: {
           type: String,
-          value: "1000px"
+          value: "100%"
         },
 
         /**
@@ -140,33 +148,44 @@
           observer: '_baseChanged'
         },
 
+        _basesLoaded: {
+          type: Number,
+          notify: true,
+          value: 0
+        },
+
+        _basesTotal: {
+          type: Number,
+          notify: true,
+          value: 0
+        },
+
         _resources: {
           type: Array,
           notify: true,
           value: []
         },
 
-        _resourcesCount: {
-          type: Number,
+
+        ////////////////
+        // GRAPH VARS //
+        ////////////////
+
+        _edges: {
+          type: Array,
           notify: true,
-          value: 0
+          value: null
         },
 
-        _loadedCount: {
-          type: Number,
-          notify: true,
-          value: 0
-        },
-
-        _tmpResource: {
+        _nodeMap:{
           type: Object,
-          notify: true,
-          value: null,
-          observer: '_tmpResourceChanged'
+          value: null
         },
 
-
-
+        _rNodeMap:{
+          type: Object,
+          value: null
+        },
 
         _order: {
           type: Object,
@@ -178,42 +197,20 @@
           }
         },
 
+        /////////////
+        // UI VARS //
+        /////////////
+
+        _searchNode: {
+          type: String,
+          notify: true,
+          value: "",
+          observer: '_searchNodeChanged'
+        },
+
         //////////
         // I18N //
         //////////
-
-        /**
-         * Localization object.
-         *
-         * @attribute i18n
-         * @type Object
-         */
-        i18n: {
-          type: Object,
-          value: {
-            "base": {
-              "default": "Base",
-              "en": "Base",
-              "fr": "Base"
-            },
-            "model": {
-              "default": "Model",
-              "en": "Model",
-              "fr": "Modèle"
-            },
-            "ct": {
-              "default": "Computed Trace",
-              "en": "Computed Trace",
-              "fr": "Trace Transformée"
-            },
-            "st": {
-              "default": "Stored Trace",
-              "en": "Stored Trace",
-              "fr": "Trace Primaire"
-            }
-          },
-          notify: true
-        },
 
         /**
          * Localization.
@@ -225,24 +222,27 @@
         language: {
           type: String,
           notify: true,
-          observer: "_languageChanged"
         },
 
       },
+
+      behaviors: [
+        Polymer.AppLocalizeBehavior
+      ],
 
       ready: function() {
 
       },
 
-      _languageChanged: function() {
-        for (var prop in this.i18n) {
-          var tmp = "i18n." + prop + ".default";
-          this.set(tmp, this.i18n[prop][this.language]);
-        }
+      attached: function(){
+        // Load i18n json.
+        this.loadResources(this.resolveUrl('./locales.json'));
       },
 
       refresh: function() {
         if (this.baseUrl) {
+
+
           var that = this;
           // The interval that rotate the refresh button
           this._loadingInterval = setInterval(function() {
@@ -252,7 +252,6 @@
 
           this.set('_resources', []);
           this.set('_base', null);
-          this.set('_tmpResource', null);
           this.$.sjc.setGraph();
 
           this.fire('UPDATE_RESOURCE', {
@@ -265,59 +264,194 @@
       _baseChanged: function() {
         if (this._base) {
 
-          console.log(this._base);
-
           var that = this;
-          // TODO : FINISH THIS
-          /*
-          this._base.load_properties( ['obselCount','hasModel','label'] )
-            .then( function( contains ){
 
+          var id = this._base['id'].split('/');
+          id = id[ id.length - 2 ]+'/';
 
-              var sorted = that._quickSort(contains);
-              that._setUris( sorted, that._base );
+          var res = {
+            '@id':id,
+            'uri': this._base['uri'],
+            'label': this._base['label'],
+            '@type': 'Base'
+          };
 
-              console.log( sorted );
+          this.push('_resources',res);
+          this._loadResources( this._base );
 
-              this.set('_tree', {});
-
-
-
-            })
-            .catch( function(err){
-              console.log(err);
-            });
-            */
-
-
-          this.push('_resources', {
-            resource: this._base,
-            parentIndex: -1
-          })
-          this._loadModels(this._base);
-          this._loadStoredTraces(this._base);
-          this._loadComputedTraces(this._base);
-          this._loadBases(this._base);
-
+          this.set('_basesTotal', 1);
+          this.set('_basesLoaded', 0);
 
         }
       },
 
+      _loadResources: function(base){
+        var that = this;
 
+        base.load_properties( ['obselCount','hasModel','label'] )
+          .then( function( resources ){
 
-      _createTree: function(resources) {
-        for (var i = 0; i < resources.length; i++) {
-          if (resources[i]['@type'] === 'Base') {
-            this._tree[resource[i].uri] = {
-              resource: resource[i],
-              children: {}
+            if( resources ){
+              that._setUris(resources, base);
+
+              for(var i in resources){
+                resources[i]['inBase'] = base.uri;
+                if(resources[i]['@type'] === 'Base'){
+                  that._loadResources(new Samotraces.Ktbs.Base( resources[i]['uri'] ));
+                  that.set('_basesTotal', that._basesTotal + 1);
+                }
+                that.push('_resources',resources[i]);
+              }
+
             }
+
+            that.set('_basesLoaded', that._basesLoaded + 1);
+
+            if( that._basesLoaded === that._basesTotal ){
+                that.set('_resources', that._quickSort( that._resources ) );
+                that._setResources( that._resources );
+            }
+
+          })
+          .catch( function(err){
+            console.log(err);
+          });
+      },
+
+
+      _setResources: function(resources){
+
+        this.set('_nodeMap', new Map());
+        this.set('_rNodeMap', new Map());
+
+        for(var i in resources){
+
+          var node = {
+            "id": 'n' + i,
+            "x": 10 + ((i * 10) % 500),
+            "y": 10 + Math.floor(i / 50) * 10,
+            "resource": resources[i],
+            "label": resources[i]['@id']
+          }
+
+          switch(resources[i]['@type']){
+            case "TraceModel":
+              node.color = node.originalColor = '#F4D03F';
+              node.size = 2;
+              break;
+            case "StoredTrace":
+              node.color = node.originalColor = '#81CFE0';
+              node.size = 1;
+              break;
+            case "ComputedTrace":
+              node.color = node.originalColor = '#446CB3';
+              node.size = 1;
+              break;
+            case "Base":
+              node.color = node.originalColor = '#F2784B';
+              node.size = 3;
+              break;
+          }
+
+          this.$.sjc.addNode(node);
+
+          this._nodeMap.set(resources[i].uri, node.id);
+          this._rNodeMap.set(node.id, resources[i]);
+
+        }
+        this._createCompleteGraph();
+        this._displayTreeGraph();
+        clearInterval(this._loadingInterval);
+        this.fire('REFRESHED');
+      },
+
+      _createCompleteGraph: function(){
+
+        this.set('_edges', []);
+        for(var i = 0; i <  this._resources.length; i++){
+          var _unique = true;
+          var baseUri = this._resources[i].inBase;
+          var resUri = this._resources[i].uri;
+
+          // Modèle edge creation
+          if( this._resources[i].hasModel ){
+            var modelUri = this._resources[i].hasModel;
+            if( this._nodeMap.get(modelUri) ){
+              var e = {
+                "id": 'e' + this._edges.length,
+                "source": this._nodeMap.get(modelUri),
+                "target": this._nodeMap.get(resUri),
+                "_type": "Resource_to_TraceModel"
+              };
+              _unique = false;
+              this.push('_edges', e);
+            }
+          }
+
+          //TODO : faire pour hasSource;
+
+          // Base edge creation
+          if( this._nodeMap.get(baseUri) ){
+            var e = {
+              "id": 'e' + this._edges.length,
+              "source": this._nodeMap.get(baseUri),
+              "target": this._nodeMap.get(resUri),
+              "_type": "Resource_to_Base"
+            };
+            if( _unique )
+              e._unique = true;
+            this.push('_edges', e);
           }
         }
       },
 
-      _loadBase: function(baseUri) {
+      _displayTreeGraph: function(){
 
+        //TODO : compléter avec hasSource.
+        var _edges = [];
+        for( var i = 0 ; i < this._edges.length; i++ ){
+          if( this._edges[i]._type !== "Resource_to_Base" || this._edges[i]._unique )
+            _edges.push(this._edges[i]);
+        }
+        this.$.sjc.setEdges( _edges );
+        this.$.sjc.forceAtlas2();
+      },
+
+      _displayCompleteGraph: function(){
+        this.$.sjc.setEdges(this._edges);
+        this.$.sjc.forceAtlas2();
+      },
+
+      _searchNodeChanged: function(){
+        if( this._searchNode === "" ){
+          this.$.sjc.resetNodesColor( );
+        }
+        else{
+          var _nodes = [];
+          var _rNodes = [];
+
+          for(var i = 0; i < this._resources.length; i++){
+            if(this._resources[i]['@id'].indexOf( this._searchNode ) === -1)
+              _nodes.push( this._nodeMap.get(this._resources[i].uri ) );
+            else
+              _rNodes.push( this._nodeMap.get(this._resources[i].uri ) );
+          }
+
+          var j = 0;
+          var max = _rNodes.length;
+          while(j < max){
+            for(var k = 0; k < this._edges.length; k++){
+              if( this._edges[k].source === _rNodes[j] )
+                _rNodes.push(this._edges[k].target);
+            }
+            j = j + 1;
+            max = _rNodes.length;
+          }
+
+
+          this.$.sjc.deEmphasize( _nodes );
+          this.$.sjc.resetNodesColor( _rNodes );
+        }
       },
 
       _setUris: function(contains, base) {
@@ -349,284 +483,7 @@
             .concat(more);
 
         } else return xxs;
-      },
-
-
-
-
-
-
-
-
-
-      _tmpResourceChanged: function() {
-        if (this._tmpResource) {
-          var resource = this._tmpResource;
-          switch (resource.type) {
-            case "TraceModel":
-              this.push('_resources', this._addModel(resource));
-              break;
-            case "StoredTrace":
-              this.push('_resources', this._addStoredTrace(resource));
-              break;
-            case "ComputedTrace":
-              this.push('_resources', this._addComputedTrace(resource));
-              break;
-            case "Base":
-              this.push('_resources', this._addBase(resource));
-              this._loadModels(resource);
-              this._loadStoredTraces(resource);
-              this._loadComputedTraces(resource);
-              this._loadBases(resource);
-              break;
-          }
-          this.set('_loadedCount', this._loadedCount + 1);
-          if (this._loadedCount === this._resourcesCount) {
-            // RefreshIcon can stop spinning
-            clearInterval(this._loadingInterval);
-            this._checkParentIndexes();
-            this._createGraph();
-          }
-        }
-      },
-
-      _checkParentIndexes: function() {
-        for (var i = 1; i < this._resources.length; i++) {
-          if (this._resources[i].parentIndex === -1) {
-            switch (this._resources[i].resource.type) {
-              case "TraceModel":
-                this._resources[i] = this._addModel(this._resources[i].resource);
-                break;
-              case "StoredTrace":
-                this._resources[i] = this._addStoredTrace(this._resources[i].resource);
-                break;
-              case "ComputedTrace":
-                this._resources[i] = this._addComputedTrace(this._resources[i].resource);
-                break;
-              case "Base":
-                this._resources[i] = this._addBase(this._resources[i].resource);
-                break;
-            }
-          }
-        }
-      },
-
-      _createGraph: function() {
-        this.$.sjc.addNode(this._createNode(this._resources[0].resource, 0));
-        for (var i = 1; i < this._resources.length; i++) {
-          this.$.sjc.addNode(this._createNode(this._resources[i].resource, i));
-        }
-        for (var i = 1; i < this._resources.length; i++) {
-          this.$.sjc.addEdge(this._createEdge(this._resources[i].resource, this._resources[i].parentIndex, i));
-        }
-        this.$.sjc.forceAtlas2();
-      },
-
-      _createNode: function(resource, index) {
-        var node = {
-          "id": 'n' + index,
-          "x": 10 + ((index * 10) % 500),
-          "y": 10 + Math.floor(index / 50) * 10,
-          "resource": resource
-        }
-        switch (resource.type) {
-          case "TraceModel":
-            node.label = resource.uri.split('/');
-            if (node.label[node.label.length - 1] !== "") node.label = node.label[node.label.length - 1];
-            else node.label = node.label[node.label.length - 2] + '/';
-            node.color = node.originalColor = '#F4D03F';
-            node.size = 2;
-            break;
-          case "StoredTrace":
-            node.label = resource.uri.split('/');
-            node.label = node.label[node.label.length - 2];
-            node.color = node.originalColor = '#81CFE0';
-            node.size = 1;
-            break;
-          case "ComputedTrace":
-            node.label = resource.uri.split('/');
-            node.label = node.label[node.label.length - 2];
-            node.color = node.originalColor = '#446CB3';
-            node.size = 1;
-            break;
-          case "Base":
-            node.label = resource.uri.split('/');
-            node.label = node.label[node.label.length - 2];
-            node.color = node.originalColor = '#F2784B';
-            node.size = 3;
-            break;
-        }
-        return node;
-      },
-
-      _createEdge: function(resource, parentIndex, index) {
-
-        if (parentIndex === -1)
-          parentIndex = 0;
-
-        var edge = {
-          "id": 'e' + index,
-          "source": 'n' + parentIndex,
-          "target": 'n' + index
-        }
-        return edge;
-      },
-
-      ////////////////////
-      // _ADD FUNCTIONS //
-      ////////////////////
-
-      _addBase: function(base) {
-        var uri = (new Samotraces.Ktbs.Resource(null)).getAbsoluteURLFromRelative(base.uri, '../');
-        if (uri[uri.length - 1] !== '/')
-          uri = uri + '/';
-        for (var i = 0; i < this._resources.length; i++) {
-          if (this._resources[i].resource.uri === uri) {
-            return {
-              resource: base,
-              parentIndex: i
-            }
-          }
-        }
-        return {
-          resource: base,
-          parentIndex: -1
-        };
-      },
-
-      _addModel: function(model) {
-        for (var i = 0; i < this._resources.length; i++) {
-          if (this._resources[i].resource.uri === model.base_uri) {
-            return {
-              resource: model,
-              parentIndex: i
-            }
-          }
-        }
-        return {
-          resource: model,
-          parentIndex: -1
-        };
-      },
-
-      _addStoredTrace: function(trace) {
-        var sourceUri = '';
-        if (trace.model_uri.indexOf(trace.base_uri) !== -1)
-          sourceUri = trace.model_uri;
-        else
-          sourceUri = trace.base_uri;
-        for (var i = 0; i < this._resources.length; i++) {
-          if (this._resources[i].resource.uri === sourceUri) {
-            return {
-              resource: trace,
-              parentIndex: i
-            }
-          }
-        }
-        return {
-          resource: trace,
-          parentIndex: -1
-        };
-      },
-
-      _addComputedTrace: function(trace) {
-        var sourceUri = '';
-        for (var i = 0; i < trace.hasSource.length; i++) {
-          var uri = (new Samotraces.Ktbs.Resource(null)).getAbsoluteURLFromRelative(trace.uri, trace.hasSource[i]);
-          if (uri.indexOf(trace.base_uri) !== -1) {
-            sourceUri = uri;
-            i = trace.hasSource.length;
-          }
-        }
-        if (sourceUri === '')
-          sourceUri = trace.base_uri;
-
-        for (var i = 0; i < this._resources.length; i++) {
-          if (this._resources[i].resource.uri === sourceUri) {
-            return {
-              resource: trace,
-              parentIndex: i
-            }
-          }
-        }
-        return {
-          resource: trace,
-          parentIndex: -1
-        };
-      },
-
-      /////////////////////
-      // _LOAD FUNCTIONS //
-      /////////////////////
-
-      _loadModels: function(base) {
-        var that = this;
-        base.iter_models()
-          .forEach(function(model) {
-            that.fire('UPDATE_RESOURCE', {
-              url: model.uri,
-              obj: '_tmpResource'
-            });
-          })
-          .then(function(models) {
-            that.set('_resourcesCount', that._resourcesCount + models.length);
-          })
-          .catch(function(err) {
-            console.log(err);
-          });
-      },
-
-      _loadStoredTraces: function(base) {
-        var that = this;
-        base.iter_stored_traces()
-          .forEach(function(trace) {
-            that.fire('UPDATE_RESOURCE', {
-              url: trace.uri,
-              obj: '_tmpResource'
-            });
-          })
-          .then(function(traces) {
-            that.set('_resourcesCount', that._resourcesCount + traces.length);
-          })
-          .catch(function(err) {
-            console.log(err);
-          });
-      },
-
-      _loadComputedTraces: function(base) {
-        var that = this;
-        base.iter_computed_traces()
-          .forEach(function(trace) {
-            that.fire('UPDATE_RESOURCE', {
-              url: trace.uri,
-              obj: '_tmpResource'
-            });
-          })
-          .then(function(traces) {
-            that.set('_resourcesCount', that._resourcesCount + traces.length);
-          })
-          .catch(function(err) {
-            console.log(err);
-          });
-      },
-
-      _loadBases: function(base) {
-        var that = this;
-        base.iter_bases()
-          .forEach(function(base) {
-            that.fire('UPDATE_RESOURCE', {
-              url: base.uri,
-              obj: '_tmpResource'
-            });
-          })
-          .then(function(bases) {
-            that.set('_resourcesCount', that._resourcesCount + bases.length);
-          })
-          .catch(function(err) {
-            console.log(err);
-          });
       }
-
     });
   </script>
 

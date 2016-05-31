@@ -1,0 +1,16 @@
+{
+    "en": {
+        "welcome": "A brand new way to analyse your Technology Enhanced Learning traces, using a kernel for Trace Based System.",
+        "projects": "Projects",
+        "importcsv": "Import csv traces",
+        "help": "Help",
+        "pickAProject": "Pick your project"
+    },
+    "fr": {
+        "welcome": "Une toute nouvelle façon d'analyser vos traces d'EIAH , par l 'intermédiaire d'un système à base de traces.",
+        "projects": "Projets",
+        "importcsv": "Importer des traces csv",
+        "help": "Aide",
+        "pickAProject": "Selectionnez votre project"
+    }
+}

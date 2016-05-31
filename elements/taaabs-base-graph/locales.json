@@ -1,0 +1,14 @@
+{
+    "en": {
+      "base": "Base",
+      "model": "Trace model",
+      "ct": "Computed trace",
+      "st": "Stored trace"
+    },
+    "fr": {
+      "base": "Base",
+      "model": "Modèle",
+      "ct": "Trace transformées",
+      "st": "Trace primaires"
+    }
+}
