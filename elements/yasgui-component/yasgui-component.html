@@ -1,8 +1,14 @@
-<link rel="import" href="yasgui-theme.html">
+<link rel="import" href="../../bower_components/google-chart/google-chart.html">
 <dom-module id="yasgui-component">
   <template>
-    <style include="yasgui-theme"></style>
-    <div id="showcase"></div>
+
+    <google-chart id="chart"
+  type='bar'
+  options='{"title": "Distribution of days in 2001Q1"}'>
+</google-chart>
+
+
+  <!--  <div id="showcase"></div> -->
   </template>
 
   <script>
@@ -34,13 +40,25 @@
           type: String,
           notify: true,
           value: ""
+        },
+
+        _datas: {
+          type: Array,
+          notify: true,
+          value: [["Categories", "Value"],
+ ["Category 1", 1.0],
+ ["Category 2", 1.1]]
         }
+
 
       },
 
       ready: function() {
         this.set('_yasqe', new YASGUI.YASQE() );
-        this.set('_yasr', new YASGUI.YASR( this.$.showcase ) );
+      },
+
+      attached: function(){
+        this.$.chart.set('data', this._datas);
       },
 
       refresh: function( query ) {
@@ -48,19 +66,32 @@
         console.log(query);
 
         var query = query || this._query;
-        this._yasqe.setValue( query );
-        this._yasqe.query( this._drawResponse.bind(this) )
+        //this._yasqe.setValue( query );
+        //this._yasqe.query( this._drawResponse.bind(this) )
+
+        var that = this;
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', this.endPoint, true);
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.setRequestHeader('Content-Type', 'application/sparql-query');
+        xhr.withCredentials = true;
+        xhr.onerror = function(err) {
+          console.log( err + xhr.status );
+        };
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            that._drawResponse( xhr.response );
+          }
+        };
+
+        xhr.send(query);
 
       },
 
       _drawResponse: function( response ){
 
         console.log( response );
-
-        var response = response.responseJSON || this._response;
-
-        this._yasr.setResponse(response);
-        this._yasr.draw();
 
       },
 

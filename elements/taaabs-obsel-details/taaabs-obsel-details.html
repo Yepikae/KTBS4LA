@@ -1,0 +1,139 @@
+<dom-module id="taaabs-obsel-details">
+
+
+
+  <template>
+
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <div style="padding:5px;background-color:#21b2a6;color:white; width: 100%; text-align: center">
+        <h4>{{obsel.id}}</h4>
+    </div>
+    <div style="padding:10px;width: 100%; broder-bottom: solid 1px gray">
+      <div><b>Type: </b>{{obsel.type}}</div>
+      <div><b>Begin: </b>{{obsel.begin}}</div>
+      <div><b>End: </b>{{obsel.end}}</div>
+    </div>
+    <div style="padding:10px;width: 100%;">
+      <table>
+        <thead>
+          <tr>
+            <th> Attribute </th>
+            <th> Value </th>
+            <th> Create template </th>
+          </tr>
+        </thead>
+        <tbody>
+          <template is="dom-repeat" items="{{_obselAttributes}}">
+            <tr>
+              <td>{{item.name}}</td>
+              <td>{{item.value}}</td>
+              <td></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+  </template>
+
+
+
+  <script>
+
+    Polymer({
+      is: 'taaabs-obsel-details',
+      properties: {
+
+        /**
+        * The obsel.
+        *
+        * @attribute obsel
+        * @type Object
+        */
+        obsel: {
+          type: Object,
+          notify: true,
+          value: null,
+          observer: '_obselChanged'
+        },
+
+        _obselAttributes: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        /**
+        * Localization object.
+        *
+        * @attribute i18n
+        * @type Object
+        */
+		    i18n: {
+            type: Object,
+            value: {
+
+            },
+            notify: true
+        },
+
+        /**
+        * Localization.
+        * fr, en.
+        *
+        * @attribute language
+        * @type String
+        */
+        language: {
+            type: String,
+            notify: true,
+            observer: "_languageChanged"
+        },
+
+      },
+
+
+	  listeners:{
+
+	  },
+
+
+      _languageChanged: function(){
+        for(var prop in this.i18n) {
+          var tmp = "i18n."+prop+".default";
+          this.set(tmp, this.i18n[prop][this.language]);
+        }
+      },
+
+      ready: function(){
+
+
+      },
+
+      _obselChanged: function(){
+        if( this.obsel !== null ){
+
+          console.log( this.obsel );
+
+          this.set('_obselAttributes', []);
+          var keys = Object.keys(this.obsel);
+          for( var i = 0; i < keys.length; i++ ){
+            if( keys[i] !== "@id" && keys[i] !== "@type" && keys[i] !== "begin" && keys[i] !== "end")
+              this.push('_obselAttributes', {
+                "name": keys[i],
+                "value": this.obsel[keys[i]]
+              })
+          }
+          this.set('obsel.id', this.obsel['@id']);
+          this.set('obsel.type', this.obsel['@type']);
+        }
+      }
+
+    });
+  </script>
+</dom-module>

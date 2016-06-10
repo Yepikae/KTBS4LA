@@ -73,7 +73,7 @@
 
         <section class="page" data-route="csv-collector">
           <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
-            <taaabs-csv-collector id="tcc" language="{{language}}" base-url="{{_decodeUrl(_routeDatas.resourceurl)}}" taaabs-central-loading></taaabs-csv-collector>
+            <taaabs-csv-collector id="tcc" language="[[language]]" base-url="{{_decodeUrl(_routeDatas.resourceurl)}}" taaabs-central-loading></taaabs-csv-collector>
           </taaabs-resource-loader>
         </section>
 
@@ -85,7 +85,7 @@
           <div class="centered">
             <h2> {{localize('pickAProject')}} </h2>
             <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
-              <taaabs-base-overview id="tbo" ktbs-url="{{ktbsUrl}}" language="{{language}}" taaabs-central-loading>
+              <taaabs-base-overview id="tbo" ktbs-url="{{ktbsUrl}}" language="[[language]]" taaabs-central-loading>
               </taaabs-base-overview>
             </taaabs-resource-loader>
           </div>
@@ -98,9 +98,9 @@
         <section class="page" data-route="base-details">
           <div class="centered">
             <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
-              <taaabs-base-graph id="tbg" taaabs-central-loading height="300px" bg-color="#2e3842" base-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="{{language}}">
+              <taaabs-base-graph id="tbg" taaabs-central-loading height="300px" bg-color="#2e3842" base-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]">
               </taaabs-base-graph>
-              <taaabs-base-details id="tbd" base-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="{{language}}" taaabs-central-loading>
+              <taaabs-base-details id="tbd" base-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]" taaabs-central-loading>
               </taaabs-base-details>
             </taaabs-resource-loader>
           </div>
@@ -128,8 +128,10 @@
           </div>
           <!-- THE TRACE DETAILS -->
           <div class="centered">
-            <taaabs-trace-details id="ttd" trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="{{language}}">
-            </taaabs-trace-details>
+            <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
+              <taaabs-trace-details id="ttd" trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]">
+              </taaabs-trace-details>
+            </taaabs-resource-loader>  
           </div>
         </section>
 
@@ -138,10 +140,8 @@
         <!-- ///////////////////// -->
 
         <section class="page" data-route="trace-timeline">
-          <div class="centered">
-            <taaabs-trace-timeline id="ttt" trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="{{language}}">
-            </taaabs-trace-timeline>
-          </div>
+          <taaabs-trace-timeline id="ttt" trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]">
+          </taaabs-trace-timeline>
         </section>
 
         <!-- ////////////////// -->
@@ -152,7 +152,7 @@
           <div class="centered">
             <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
               <taaabs-spare id="ts" taaabs-central-loading
-                trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="{{language}}">
+                trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]">
               </taaabs-spare>
             </taaabs-resource-loader>
           </div>

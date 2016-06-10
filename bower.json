@@ -35,6 +35,8 @@
     "file-reader": "TaaabsElements/file-reader",
     "taaabs-csv-collector": "TaaabsElements/taaabs-csv-collector",
     "taaabs-resource-loader": "TaaabsElements/taaabs-resource-loader",
+    "paper-color-picker": "https://github.com/David-Mulder/paper-color-picker.git",
+    "google-chart":"https://github.com/GoogleWebComponents/google-chart.git",
     "jquery": "~2.1.4"
   }
 }

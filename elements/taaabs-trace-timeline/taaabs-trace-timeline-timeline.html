@@ -17,7 +17,7 @@
   </style>
 
   <template>
-    <div id="target" style="width:1020;margin: 0 auto;box-shadow:0 0 1em gray"></div>
+    <div id="target"></div>
     <span id="slidingPosition">{{_slidingPosition}}</span>
   </template>
 
@@ -68,6 +68,18 @@
       ///////////////////////
       // GLOBAL ATTRIBUTES //
       ///////////////////////
+
+      width : {
+        type: String,
+        notify: true,
+        value: "1000px"
+      },
+
+      grad: {
+        type: Array,
+        notify: true,
+        value: []
+      },
 
       /**
       * Begin time of the trace.
@@ -216,7 +228,7 @@
       _zlYPosition: {
         type: Number,
         notify: true,
-        value: 0
+        value: 36
       },
 
       /**
@@ -350,7 +362,7 @@
       _tlYPosition: {
         type: Number,
         notify: true,
-        value: 20
+        value: 0
       },
 
       /**
@@ -403,18 +415,9 @@
       // create an new instance of a pixi stage
       this.set('_stage', new PIXI.Container());
 
-      // We add the size of our canvas.
-      this._stage._width = 1020;
-      this._stage._height = 55;
+      this.$.target.style.width = this.width;
 
-      // Create a renderer instance.
-      if(this.openGl)
-        this.set('_renderer', new PIXI.autoDetectRenderer(1020, 55));
-      else
-        this.set('_renderer', new PIXI.CanvasRenderer(1020, 55));
 
-      // Add the renderer view element to the local DOM.
-      this.$.target.appendChild(this._renderer.view);
 
     },
 
@@ -428,6 +431,27 @@
     * @method initVisu
     */
     initVisu: function(){
+
+      var _width = this.$.target.getBoundingClientRect().width;
+
+      // We add the size of our canvas.
+      /*
+      this._stage._width = 1020;
+      this._stage._height = 215;
+      */
+      // TODO Nouvelle taille non dynamique, changer ça.
+      this._stage._width = _width;
+      this._stage._height = _width;
+
+      // Create a renderer instance.
+      if(this.openGl)
+        this.set('_renderer', new PIXI.autoDetectRenderer(_width, 55));
+      else
+        this.set('_renderer', new PIXI.CanvasRenderer(_width, 55));
+
+      // Add the renderer view element to the local DOM.
+      this.$.target.appendChild(this._renderer.view);
+
       this._initZoomLine();
       this._initTimeLine();
 
@@ -508,7 +532,7 @@
                                              this._zlYPosition,
                                              this._stage._width,
                                              this._zlHeight,
-                                             0x4183D7);
+                                             0x2E3842);
       this._zlContainer.addChild( this._zlRectangle );
       this._stage.addChild( this._zlContainer );
 
@@ -530,12 +554,12 @@
       this._zlBeginPointer = begin;
   		this._zlEndPointer = end;
 
-  		this._zlBeginSlider.position.x = ( (1000 - 0) / (this._end - this._begin) ) * ( begin - this._begin ) + 0;
+  		this._zlBeginSlider.position.x = ( (this._stage._width - 20 - 0) / (this._end - this._begin) ) * ( begin - this._begin ) + 0;
 
-  		this._zlEndSlider.position.x = ( (1000 - 0) / (this._end - this._begin) ) * ( end - this._begin ) + 0;
+  		this._zlEndSlider.position.x = ( (this._stage._width - 20 - 0) / (this._end - this._begin) ) * ( end - this._begin ) + 0;
 
-  		this._zlSliderPanel.position.x = ( (1000 - 0) / (this._end - this._begin) ) * ( begin - this._begin ) + 0;
-      this._zlSliderPanel.width = ( (1000 - 0) / (this._end - this._begin) ) * ( end - this._begin ) + 0 - this._zlSliderPanel.position.x;
+  		this._zlSliderPanel.position.x = ( (this._stage._width - 20 - 0) / (this._end - this._begin) ) * ( begin - this._begin ) + 0;
+      this._zlSliderPanel.width = ( (this._stage._width - 20 - 0) / (this._end - this._begin) ) * ( end - this._begin ) + 0 - this._zlSliderPanel.position.x;
 
       this._tlBegin = begin;
       this._tlEnd = end;
@@ -554,7 +578,7 @@
 
       // Init the begin slider
       this._zlBeginSlider = new PIXI.Graphics();
-  		this._zlBeginSlider.beginFill(0xaaaaaa);
+  		this._zlBeginSlider.beginFill(0xffffff);
   		this._zlBeginSlider.drawCircle(0, 0 , 6);
   		this._zlBeginSlider.position = {x:0, y: this._zlYPosition + 9};
   		this._zlBeginSlider.interactive = true;
@@ -672,7 +696,7 @@
     */
     _initZLEndSlider: function(){
   		this._zlEndSlider = new PIXI.Graphics();
-  		this._zlEndSlider.beginFill(0xaaaaaa);
+  		this._zlEndSlider.beginFill(0xffffff);
   		this._zlEndSlider.drawCircle(0, 0 , 6);
   		this._zlEndSlider.interactive = true;
   		this._zlEndSlider.position = {x: this._stage._width, y: this._zlYPosition + 9};
@@ -893,7 +917,7 @@
                                              this._tlYPosition,
                                              this._stage._width,
                                              this._tlHeight,
-                                             0x4183D7);
+                                             0x2E3842);
 
       this._tlContainer.addChild(this._tlRectangle);
    	  this._stage.addChild( this._tlContainer );
@@ -937,7 +961,7 @@
                                        this._tlYPosition,
                                        this._stage._width,
                                        this._tlHeight,
-                                       0x4183D7);
+                                       0x2E3842);
       this._tlContainer.addChild(this._tlRectangle);
 
       // TODO : virer ça jusqu'à ------
@@ -979,187 +1003,48 @@
       var _rest = this._tlBegin  % _right_interval;
       var _first_date = new Date( this._tlBegin - _rest );
 
-      var dates = [ { big: true, ds: _first_date.toLocaleDateString() + "  "+ _first_date.toLocaleTimeString(), dt: _first_date.getTime() }];
+      var dates = [ { ds: _first_date.toLocaleDateString() + "\n"+ _first_date.toLocaleTimeString(), dt: _first_date.getTime() }];
 
       var _begin_tmp = new Date(this._tlBegin);
       var _end_tmp = new Date(this._tlEnd);
 
       var _pointer = dates[0].dt;
-
-      console.log(  _begin_tmp.toLocaleDateString() + "  "+ _begin_tmp.toLocaleTimeString());
       var j = 1;
       while( _pointer < this._tlEnd ){
-
         var _tmp_date = new Date( dates[0].dt + j*_use_interval );
-        console.log(  _tmp_date.toLocaleDateString() + "  "+ _tmp_date.toLocaleTimeString());
-
-        dates.push( { big: true, ds: _tmp_date.toLocaleDateString() + "  "+ _tmp_date.toLocaleTimeString(), dt: dates[0].dt + j*_use_interval } );
-
+        dates.push( { ds: _tmp_date.toLocaleDateString() + "\n"+ _tmp_date.toLocaleTimeString(), dt: dates[0].dt + j*_use_interval } );
         _pointer = dates[0].dt + j*_use_interval;
         j++;
       }
-      console.log(  _end_tmp.toLocaleDateString() + "  "+ _end_tmp.toLocaleTimeString());
 
-      //TODO : Finir la mise en page des dates.
-
-/*
-  		// If z <  10 minutes
-  		if( z < 1000 * 60 * 10 ){
-  			originalDate.setSeconds(0);
-  			originalDate.setMinutes(0);
-  			originalDate.setHours(0);
-  			var newBegin = originalDate.getTime();
-
-  			while( newBegin < y ){
-  				if( newBegin > x ){
-  					if( originalDate.getSeconds() === 0 ){
-  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+ originalDate.getHours()+":"+originalDate.getMinutes()+"'";
-  						var dateTime = originalDate.getTime();
-  						dates.push( { big: true, ds: dateString, dt: dateTime} );
-  					}
-  					else{
-  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+ originalDate.getHours()+":"+originalDate.getMinutes()+"'";
-  						var dateTime = originalDate.getTime();
-  						dates.push( { big: false, ds: dateString, dt: dateTime} );
-  					}
-  				}
-  				originalDate = new Date( originalDate.getTime() + 10*1000 );
-  				newBegin = originalDate.getTime();
-  			}
-  		}
-  		// If z < 10 hours
-  		else if( z < 1000 * 60 * 60 * 10){
-  			originalDate.setSeconds(0);
-  			originalDate.setMinutes(0);
-  			originalDate.setHours(0);
-  			var newBegin = originalDate.getTime();
-
-  			while( newBegin < y ){
-  				if( newBegin > x ){
-  					if( originalDate.getMinutes() === 0 ){
-  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+ originalDate.getHours()+":"+originalDate.getMinutes()+"'";
-  						var dateTime = originalDate.getTime();
-  						dates.push( { big: true, ds: dateString, dt: dateTime} );
-  					}
-  					else{
-  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+ originalDate.getHours()+":"+originalDate.getMinutes()+"'";
-  						var dateTime = originalDate.getTime();
-  						dates.push( { big: false, ds: dateString, dt: dateTime} );
-  					}
-  				}
-  				originalDate = new Date( originalDate.getTime() + 10*60*1000 );
-  				newBegin = originalDate.getTime();
-  			}
-  		}
-  		// If z < 10 days
-  		else if( z < 1000 * 60 * 60 * 24 * 10){
-  			originalDate.setSeconds(0);
-  			originalDate.setMinutes(0);
-  			originalDate.setHours(0);
-  			var newBegin = originalDate.getTime();
-
-  			while( newBegin < y ){
-  				if( newBegin > x ){
-  					if( originalDate.getHours() === 0 ){
-  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth();
-  						var dateTime = originalDate.getTime();
-  						dates.push( { big: true, ds: dateString, dt: dateTime} );
-  					}
-  					else{
-  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+ originalDate.getHours()+":"+originalDate.getMinutes()+"'";
-  						var dateTime = originalDate.getTime();
-  						dates.push( { big: false, ds: dateString, dt: dateTime} );
-  					}
-  				}
-  				originalDate = new Date( originalDate.getTime() + 10*60*60*1000 );
-  				newBegin = originalDate.getTime();
-  			}
-  		}
-  		// If z < 10 months
-  		else if( z < 1000 * 60 * 60 * 24 * 30.5 * 10){
-  			originalDate.setSeconds(0);
-  			originalDate.setMinutes(0);
-  			originalDate.setHours(0);
-  			originalDate.setDate(1);
-  			var newBegin = originalDate.getTime();
-
-  			while( newBegin < y ){
-  				if( newBegin > x ){
-  					if( originalDate.getDate() === 1 ){
-  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+originalDate.getFullYear();
-  						var dateTime = originalDate.getTime();
-  						dates.push( { big: true, ds: dateString, dt: dateTime} );
-  					}
-  					else{
-  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+originalDate.getFullYear();
-  						var dateTime = originalDate.getTime();
-  						dates.push( { big: false, ds: dateString, dt: dateTime} );
-  					}
-  				}
-  				originalDate = new Date( originalDate.getTime() + 10*24*60*60*1000 );
-  				newBegin = originalDate.getTime();
-  			}
-  		}
-  		// If z < 10 years
-  		else if( z < 1000 * 60 * 60 * 24 * 365 * 10){
-  			originalDate.setSeconds(0);
-  			originalDate.setMinutes(0);
-  			originalDate.setHours(0);
-  			originalDate.setDate(1);
-  			originalDate.setMonth(1);
-  			var newBegin = originalDate.getTime();
-
-  			while( newBegin < y ){
-  				if( newBegin > x ){
-  					if( originalDate.getMonth() === 1 ){
-  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+originalDate.getFullYear();
-  						var dateTime = originalDate.getTime();
-  						dates.push( { big: true, ds: dateString, dt: dateTime} );
-  					}
-  					else{
-  						var dateString = originalDate.getDate() +"/"+originalDate.getMonth()+"\n"+originalDate.getFullYear();
-  						var dateTime = originalDate.getTime();
-  						dates.push( { big: false, ds: dateString, dt: dateTime} );
-  					}
-  				}
-  				originalDate = new Date( originalDate.getTime() + 10*31*24*60*60*1000 );
-  				originalDate.setDate(1);
-  				newBegin = originalDate.getTime();
-  			}
-  		}
-  		else{
-  			alert('really? A trace over ten years?');
-  		}
-*/
-  		for( var i = 0; i < dates.length; i++){
+      var i = 0;
+  		for( i = 0; i < dates.length; i++){
   			var val = dates[i].dt;
   			var line = undefined;
 
   			//var pixelPos = ( val / z ) * this._width-20;
 
-        var pixelPos =  (val - this._tlBegin) * (1000 - 0) / (this._tlEnd - this._tlBegin) + 0;
+        var pixelPos =  (val - this._tlBegin) * (this._stage._width - 20 - 0) / (this._tlEnd - this._tlBegin) + 0;
 
   			pixelPos = pixelPos + 10;
 
-  			if( dates[i].big ){
-  				line = this._getRectangle(pixelPos-1, this._tlYPosition, 3, 7, 0xef5350);
-  				var text = new PIXI.Text(dates[i].ds,{font : '10px Arial', fill : 0xffffff, align : 'center'});
-  				text.x = pixelPos - text.width/2;
-  				text.y = this._tlYPosition + 10;
-  				text.alpha = 0.87;
-  				this._tlRectangle.addChild(text);
-  			}
-  			else{
-  				line = this._getRectangle(pixelPos, this._tlYPosition, 1, 7, 0xffffff);
-  				var text = new PIXI.Text(dates[i].ds,{font : '10px Arial', fill : 0xffffff, align : 'center'});
-  				text.x = pixelPos - text.width/2;
-  				text.y = this._tlYPosition + 10;
-  				text.alpha = 0.87;
-  				this._tlRectangle.addChild(text);
-  			}
+				line = this._getRectangle(pixelPos, this._tlYPosition, 1, 7, 0xffffff);
+				var text = new PIXI.Text(dates[i].ds,{font : '10px Arial', fill : 0xffffff, align : 'center'});
+				text.x = pixelPos - text.width/2;
+				text.y = this._tlYPosition + 10;
+				text.alpha = 0.87;
+				this._tlRectangle.addChild(text);
+
   			line.alpha = 0.87;
   			this._tlRectangle.addChild(line);
+
+        this.grad[i].position.x = pixelPos;
   		}
+
+      while ( i < this.grad.length ){
+        this.grad[i].position.x = -1;
+        i++;
+      }
 
   	},
 
@@ -1174,7 +1059,7 @@
                                        this._tlYPosition,
                                        this._stage._width,
                                        this._tlHeight,
-                                       0x4183D7);
+                                       0x2E3842);
       this._tlContainer.addChild(this._tlRectangle);
 
   		var x = this._tlBegin;
@@ -1206,6 +1091,7 @@
   				text.y = this._tlYPosition + 15;
   				text.alpha = 0.87;
   				this._tlRectangle.addChild(text);
+
   			}
   			else if( (val / interval) % 5 === 0){
   				line = this._getRectangle(pixelPos, this._tlYPosition, 1, 10, 0xffffff);

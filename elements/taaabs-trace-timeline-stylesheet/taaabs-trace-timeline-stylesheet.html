@@ -3,7 +3,7 @@
   <template>
 
     <style>
-      :host #textEditor{
+      :host #textEditor {
         width: 400px;
         height: 600px;
         font-family: monospace;
@@ -11,79 +11,100 @@
     </style>
 
 
-    <textarea id="textEditor" value="[[styleSheet]]"></textarea>
+    <textarea id="textEditor" value="{{styleSheet}}"></textarea>
 
     <div class="button" on-click="_applyStyle"> APPLY </div>
 
   </template>
 
 
-
   <script>
-
     Polymer({
       is: 'taaabs-trace-timeline-stylesheet',
       properties: {
 
+        /**
+         * List of the `styleSheet` rules.
+         *
+         * @attribute rules
+         * @type Array
+         */
+        rules: {
+          type: Array,
+          notify: true,
+          value: null
+        },
+
         styleSheet: {
           type: String,
           notify: true,
-          value: "#DEFAULT_GLOBAL_SYMBOL {\n  color: #21b2a6,\n  shape: DIAMOND\n}"
+          value: ""
         },
 
         /**
-        * Localization object.
-        *
-        * @attribute i18n
-        * @type Object
-        */
-		    i18n: {
-            type: Object,
-            value: {
-
-            },
-            notify: true
-        },
-
-        /**
-        * Localization.
-        * fr, en.
-        *
-        * @attribute language
-        * @type String
-        */
+         * Localization.
+         * fr, en.
+         *
+         * @attribute language
+         * @type String
+         */
         language: {
-            type: String,
-            notify: true,
-            observer: "_languageChanged"
+          type: String,
+          notify: true
         },
 
       },
 
+      observers: [
+        '_onRulesChanged(rules.*)',
+      ],
 
-	  listeners:{
-      'textEditor.input':'_textEditorInput'
-	  },
-
-
-      _languageChanged: function(){
-        for(var prop in this.i18n) {
-          var tmp = "i18n."+prop+".default";
-          this.set(tmp, this.i18n[prop][this.language]);
-        }
-      },
-
-      ready: function(){
-
+        ready: function() {
 
       },
 
-      _applyStyle: function(){
+      attached: function() {
+        this.set('styleSheet', "#DEFAULT_GLOBAL_SYMBOL {\n  color: #21b2a6,\n  shape: DIAMOND\n}");
+      },
+
+      _applyStyle: function() {
         this.styleSheet = this.$.textEditor.value;
       },
 
-      _textEditorInput: function(){
-        console.log(this.$.textEditor.value);
+      /**
+       * Triggered when `rules` changes.
+       *
+       * @method _onRulesChanged
+       */
+      _onRulesChanged: function() {
+
+        var styleSheet = "";
+        for (var i = 0; i < this.rules.length; i++) {
+          var rule = this.rules[i];
+          var new_rule = "\n\n";
+          if (rule.typeObsel) {
+            new_rule += "#" + rule.typeObsel.name+' ';
+          }
+          if( rule.attributes.length > 0 ){
+            new_rule += '.' + rule.attributes[0].name + '["';
+            if (rule.attributes[0].operator)
+              new_rule += rule.attributes[0].operator + '","';
+            new_rule += rule.attributes[0].val + '"]';
+          }
+          for (var j = 1; j <  rule.attributes.length; j++) {
+            new_rule += '.' + rule.attributes[j].name + '["';
+            if (rule.attributes[j].operator)
+              new_rule += rule.attributes[j].operator + '","';
+            new_rule += rule.attributes[j].val + '"]';
+          }
+          new_rule += "{\n";
+          new_rule += "  color: " + rule.symbol.color + ',\n';
+          new_rule += "  shape: " + rule.symbol.shape + ',\n';
+          new_rule += "  enabled: " + rule.enabled.toString() + '\n}';
+
+          styleSheet += new_rule;
+        }
+        this.set('styleSheet', styleSheet);
       }
 
     });

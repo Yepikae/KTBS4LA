@@ -12,7 +12,7 @@
   </style>
 
   <template>
-    <div id="target" style="width:1020;margin: 0 auto; margin-top:100px;box-shadow:0 0 1em gray"></div>
+    <div id="target"></div>
   </template>
 
   <script>
@@ -62,6 +62,12 @@
       ///////////////////////
       // GLOBAL ATTRIBUTES //
       ///////////////////////
+
+      width : {
+        type: String,
+        notify: true,
+        value: "1000px"
+      },
 
       /**
       * The list of obsels to display.
@@ -178,9 +184,14 @@
         type: Boolean,
         notify: true,
         value : false
+      },
+
+      grad: {
+        type: Array,
+        notify: true,
+        value: []
       }
     },
-
 
 	  listeners:{
 
@@ -190,19 +201,7 @@
       // create an new instance of a pixi stage
       this.set('_stage', new PIXI.Container());
 
-      // We add the size of our canvas.
-      this._stage._width = 1020;
-      this._stage._height = 215;
-
-      // Create a renderer instance.
-      if(this.openGl)
-        this.set('_renderer', new PIXI.autoDetectRenderer(1020, 215));
-      else
-        this.set('_renderer', new PIXI.CanvasRenderer(1020, 215));
-
-      // Add the renderer view element to the local DOM.
-      this.$.target.appendChild(this._renderer.view);
-
+      this.$.target.style.width = this.width;
     },
 
     ///////////////////////
@@ -215,6 +214,29 @@
     * @method initVisu
     */
     initVisu: function(){
+
+      var _width = this.$.target.getBoundingClientRect().width;
+
+      // We add the size of our canvas.
+      /*
+      this._stage._width = 1020;
+      this._stage._height = 215;
+      */
+      // TODO Nouvelle taille non dynamique, changer ça.
+      this._stage._width = _width;
+      this._stage._height = _width;
+
+      // Create a renderer instance.
+      if(this.openGl)
+        this.set('_renderer', new PIXI.autoDetectRenderer(_width, 215));
+      else
+        this.set('_renderer', new PIXI.CanvasRenderer(_width, 215));
+
+
+
+      // Add the renderer view element to the local DOM.
+      this.$.target.appendChild(this._renderer.view);
+
       var that = this;
       function _animate() {
 
@@ -228,7 +250,7 @@
 
       _animate();
 
-      this._zoomArea = this._getRectangle(0, 0, this._stage._width, this._stage._height, 0x1e1e1e );
+      this._zoomArea = this._getRectangle(0, 0, this._stage._width, this._stage._height, 0xffffff );
       this._zoomArea.interactive = true;
       this._zoomFocusArea = this._getRectangle(0, 0, 1 , this._stage._height, 0x4183D7 );
       this._zoomFocusArea.alpha = 0.5;
@@ -305,7 +327,14 @@
         }
   		});
 
+      ////////////////
+      // RULER INIT //
+      ////////////////
 
+      for( var  i = 0; i < Math.floor( this._stage._width / 10); i++ ){
+        this.push('grad',this._getRectangle( -1, 0, 2, this._stage._height, 0xDADFE1 ));
+        this._stage.addChild( this.grad[i] );
+      }
 
     },
 
@@ -385,8 +414,6 @@
             tmpStyle.symbol[declaration[0]] = declaration[1];
           }
 
-          console.log( tmpStyle );
-
           this.push('_styleTemplateArray', tmpStyle );
         }
       }
@@ -425,6 +452,9 @@
     * @method _getObselShape
     */
     _getObselShape: function(obsel, size, position){
+
+      if( obsel['@type'] === 'm:ap' && obsel['m:AP_GAIN'] === '-5')
+        console.log('ok');
 
       if( this.styleTemplate === null || this._styleTemplateArray.length === 0 )
         return this._getDiamond(size, position, 0x21b2a6);
@@ -481,15 +511,14 @@
             }
             else{
 
-              if( directive.type ){
-                if( this._styleTemplateArray[i].type ){
-                  if( this._styleTemplateArray[i].attributes && this.styleTemplateArray[i].attributes.length > directive.attributes.length )
-                    directive = this._styleTemplateArray[i];
-                }
-              }
-              else {
+              var weight = 0;
+
+              if( directive.type )
+                weight += 1;
+              if( this._styleTemplateArray[i].type )
+                weight -= 1;
+              if( this._styleTemplateArray[i].attributes && this.styleTemplateArray[i].attributes.length > directive.attributes.length + weight )
                 directive = this._styleTemplateArray[i];
-              }
             }
           }
 
@@ -497,7 +526,7 @@
             directive = this._styleTemplateArray[i];
         }
 
-        if( Object.keys(directive).length === 0 )
+        if( Object.keys(directive).length === 0 || directive.symbol.enabled === 'false')
           return null;
 
         var color = parseInt(directive.symbol.color.replace(/^#/, ''), 16); ;
@@ -614,8 +643,6 @@
 
       var that = this;
 
-      console.log( this.styleTemplate );
-
       this._begin = start;
       this._end = end;
 
@@ -641,24 +668,19 @@
 
   		// If we have less then 50 obsels, we draw big obsels on 50 intervals.
   		// Otherwise, we draw small obsels on 100 intervals.
-  		if( obsels.length <= 50){
-  			for(var i = 0 ; i < 51; i ++){
-  				this._obselsDisplayed.push([]);
-  			}
-  			obselSize = 20;
-  		}
-  		else{
-  			for(var i = 0 ; i < 101 ; i ++){
-  				this._obselsDisplayed.push([]);
-  			}
-  			obselSize = 10;
-  		}
+
+			for(var i = 0 ; i < Math.floor(this._stage._width / 10) ; i ++){
+				this._obselsDisplayed.push([]);
+			}
+			obselSize = 10;
 
   		// For each obsels, we stack them on their corresponding intervals.
   		for(var i = 0 ; i <  obsels.length ; i++){
 
   			// X = (Position.end - Position.begin)/ (Time.end - Time.begin) * (Time - Time.begin) + Position.begin;
-  			var pixelPos = ( (1000 - 0) / (end - start) ) * ( obsels[i].end - start ) + 0;
+        // TODO changement de la position des obsels
+        var pixelPos = ( ( this._stage._width - 20 - 0) / (end - start) ) * ( obsels[i].end - start ) + 0;
+  			//var pixelPos = ( (1000 - 0) / (end - start) ) * ( obsels[i].end - start ) + 0;
 
   			// The index of the interval in 'obsels'.
   			var arrayPos = Math.floor(pixelPos / obselSize);
@@ -666,10 +688,7 @@
         if(arrayPos < 0)
           console.log(arrayPos);
 
-  			// The maximum of obsels per stack.
-  			var max = 10;
-  			if(obsels.length > 50)
-  				max = 20;
+  			var max = 20;
 
   			// If we still got room in a stack.
   			if(this._obselsDisplayed[arrayPos].length < max){

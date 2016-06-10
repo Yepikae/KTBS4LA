@@ -1,0 +1,161 @@
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<dom-module id="taaabs-tts-rule">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      :host .icon {
+        cursor: pointer;
+      }
+    </style>
+
+    <div style="display: table; table-layout: fixed; width : 100%;">
+
+      <!-- ////// -->
+      <!-- SYMBOL -->
+      <!-- ////// -->
+
+      <div style="display: table-cell; width: 60px; position: relative">
+        <div style=" display: block; position: absolute; margin-top: -18px; margin-left: -18px; left: 50%; top: 50%; width: 36px; height: 36px">
+          <iron-icon icon="timeline-symbols:{{rule.symbol.shape}}" style$="color: {{rule.symbol.color}}; width: 36px; height: 36px"></iron-icon>
+        </div>
+      </div>
+
+      <!-- ///// -->
+      <!-- RULES -->
+      <!-- ///// -->
+
+      <div style="display: table-cell; width: 100%">
+
+        <div>
+          <b><span>[[rule.typeObsel.name]]</span></b>
+        </div>
+
+        <template is="dom-repeat" items="[[rule.attributes]]">
+          <div>
+            <span>[[item.name]]</span>
+            <span>[[item.operator]]</span>
+            <span>[[item.val]]</span>
+          </div>
+        </template>
+
+      </div>
+
+      <!-- /////// -->
+      <!-- OPTIONS -->
+      <!-- /////// -->
+
+      <div style="display: table-cell; width: 40px">
+
+        <div>
+          <iron-icon class="icon fgRed fgRedH" icon="icons:clear" title="[[localize('delete')]]"></iron-icon>
+        </div>
+        <div>
+          <iron-icon class="icon fgDarkBlue fgDarkBlueH" icon="icons:settings" title="[[localize('settings')]]"></iron-icon>
+        </div>
+        <div>
+          <iron-icon class="icon fgDarkBlue fgDarkBlueH" icon="[[_getVisibility(rule.enabled)]]" title="[[localize(_getVisibility(rule.enabled))]]" on-click="_onVisibilityClicked">
+          </iron-icon>
+        </div>
+
+      </div>
+
+    </div>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'taaabs-tts-rule',
+
+      properties: {
+
+        /**
+         * The stylesheet rule to display.
+         *
+         * @attribute rule
+         * @type Object
+         */
+        rule: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        //////////
+        // I18N //
+        //////////
+
+        /**
+         * Localisation values.
+         *
+         * @attribute resources
+         * @type Object
+         */
+        resources: {
+          value: function() {
+            return {
+              "en": {
+                "delete": "Delete this rule",
+                "settings": "Edit this rule",
+                "icons:visibility": "Hide the obsels following this rule",
+                "icons:visibility-off": "Show the obsels following this rule"
+              },
+              "fr": {
+                "delete": "Supprimer cette règle",
+                "settings": "Export in a file for local save",
+                "icons:visibility": "Cacher les obsels qui suivent cette règle",
+                "icons:visibility-off": "Afficher els obsels qui suivent cette règle"
+              }
+            }
+          }
+        },
+
+        /**
+         * Localization.
+         * fr, en.
+         *
+         * @attribute language
+         * @type String
+         */
+        language: {
+          type: String,
+          notify: true,
+        }
+
+      },
+
+      behaviors: [
+        Polymer.AppLocalizeBehavior
+      ],
+
+      //////////////////
+      // UI FUNCTIONS //
+      //////////////////
+
+      /**
+       * Returns the `iron-icon` value according to the enabled status of the rule.
+       *
+       * @param {!required} enabled {String} Enabled status of the rule.
+       *
+       * @method _getVisibility
+       */
+      _getVisibility: function(enabled) {
+        return (enabled) ? 'icons:visibility' : 'icons:visibility-off';
+      },
+
+      /**
+       * Triggered on the `visibility` icon is clicked.
+       * Toggle the `rule` enabled attribute.
+       *
+       * @method _onVisibilityClicked
+       */
+      _onVisibilityClicked: function() {
+        this.set('rule.enabled', !this.rule.enabled);
+      }
+
+    });
+  </script>
+</dom-module>
