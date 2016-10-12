@@ -1,0 +1,394 @@
+<!-- iron-components -->
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<!-- Trace loader -->
+<link rel="import" href="../taaabs-trace-loader/taaabs-trace-loader.html">
+<link rel="import" href="../taaabs-trace-timeline/taaabs-trace-timeline.html">
+<link rel="import" href="../taaabs-trace-timeline-scroller/taaabs-trace-timeline-scroller.html">
+<link rel="import" href="../taaabs-trace-timeline-stylesheet/taaabs-tts-editor.html">
+<!-- Model view -->
+<link rel="import" href="../taaabs-model-simpleview/taaabs-model-simpleview.html">
+<!-- Obsel view -->
+<link rel="import" href="../taaabs-obsel-simpleview/taaabs-obsel-simpleview.html">
+<!-- Golden Docker -->
+<link rel="import" href="../golden-layout-component/golden-layout-component.html">
+<!-- Style -->
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<!-- Enough with the dependencies -->
+<dom-module id="taaabs-trace-timeline-docker">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      :host #loading {
+        height: 100%;
+        @apply(--layout-center-justified);
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+      }
+
+      :host #loading> div {
+        @apply(--layout-vertical);
+        width: 300px;
+      }
+
+      :host #loading> div> div {
+        @apply(--layout-horizontal);
+        @apply(--layout-justified);
+      }
+
+      :host #loading> div> p {
+        font-size: 14px;
+      }
+
+      :host .fade {
+        opacity: 0.6;
+      }
+
+      :host .dot {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #2E3842;
+        border-radius: 50%;
+        margin: 0 5px;
+        -webkit-transform: scale(0);
+        transform: scale(0);
+        -webkit-animation: fx 1000ms ease infinite 0ms;
+        animation: fx 1000ms ease infinite 0ms;
+      }
+
+      :host .dot:nth-child(2) {
+        -webkit-animation: fx 1000ms ease infinite 150ms;
+        animation: fx 1000ms ease infinite 150ms;
+      }
+
+      :host .dot:nth-child(3) {
+        -webkit-animation: fx 1000ms ease infinite 300ms;
+        animation: fx 1000ms ease infinite 300ms;
+      }
+
+      :host .dot:nth-child(4) {
+        -webkit-animation: fx 1000ms ease infinite 450ms;
+        animation: fx 1000ms ease infinite 450ms;
+      }
+
+      :host .dot:nth-child(5) {
+        -webkit-animation: fx 1000ms ease infinite 600ms;
+        animation: fx 1000ms ease infinite 600ms;
+      }
+
+      :host .dot:nth-child(5) {
+        -webkit-animation: fx 1000ms ease infinite 750ms;
+        animation: fx 1000ms ease infinite 750ms;
+      }
+
+      @-webkit-keyframes fx {
+        50% {
+          -webkit-transform: scale(1);
+          transform: scale(1);
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+
+      @keyframes fx {
+        50% {
+          -webkit-transform: scale(1);
+          transform: scale(1);
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+    </style>
+    <iron-pages id="pages" selected="0">
+      <div id="loading">
+        <div>
+          <p id="loading_1">
+            <iron-icon icon="icons:check-circle"></iron-icon>
+            Loading the trace...
+          </p>
+          <p id="loading_2" class="fade">
+            <iron-icon icon="icons:check-circle"></iron-icon>
+            Retrieving the model...
+          </p>
+          <p id="loading_3" class="fade">
+            <iron-icon icon="icons:check-circle"></iron-icon>
+            Getting some stylesheets...
+          </p>
+          <p id="loading_4" class="fade">
+            <iron-icon icon="icons:check-circle"></iron-icon>
+            Asking the base...
+          </p>
+          <p id="loading_5" class="fade">
+            <iron-icon icon="icons:check-circle"></iron-icon>
+            Downloading the obsels...
+          </p>
+          <div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+      </div>
+      <div>
+
+
+        <!-- Our beau-ti-ful docker layout -->
+        <golden-layout-component id="glc"></golden-layout-component>
+
+
+      </div>
+    </iron-pages>
+
+    <!-- Taaabs trace loader -->
+    <taaabs-trace-loader id="traceLoader" trace-url="[[traceUrl]]" obsels="{{_obsels}}"></taaabs-trace-loader>
+
+    <div id="timeline" style="width:100%">
+      <taaabs-trace-timeline id="t3" obsels="{{_obsels}}" format="DATE" style-template="[[traceStyleSheet]]" grad="{{_grad}}" style="width: 100%">
+      </taaabs-trace-timeline>
+      <taaabs-trace-timeline-scroller id="t3s" format="DATE" grad="{{_grad}}" style="width: 100%">
+      </taaabs-trace-timeline-scroller>
+    </div>
+
+    <taaabs-model-simpleview id="tmsv" model=[[_model]]></taaabs-model-simpleview>
+
+    <taaabs-obsel-simpleview id="tosv" obsel=[[_focusedObsel]]></taaabs-obsel-simpleview>
+
+    <taaabs-tts-editor id="t3se"></taaabs-tts-editor>
+
+
+    <taaabs-trace-timeline-stylesheet id="t3stylesheet" model=[[_model]] style-template="{{traceStyleSheet}}"></taaabs-trace-timeline-stylesheet>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'taaabs-trace-timeline-docker',
+
+      properties: {
+        /**
+         * The trace url.
+         *
+         * @attribute traceUrl
+         * @type String
+         */
+        traceUrl: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * List of obsels dowloaded from the trace.
+         *
+         * @attribute _obsels
+         * @type Array
+         */
+        _obsels: {
+          type: Array,
+          notify: true,
+          value: function() {
+            return [];
+          }
+        },
+
+        /**
+         * The trace.
+         *
+         * @attribute _trace
+         * @type Object
+         */
+        _trace: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * The model of the trace.
+         *
+         * @attribute _model
+         * @type Object
+         */
+        _model: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+      },
+
+      ready: function() {},
+
+      attached: function() {
+        // Golden-layout config
+        var config = {
+          type: 'row',
+          content: [{
+            type: 'column',
+            width: 80,
+            content: [{
+              type: 'component',
+              componentName: 'timeline',
+              componentState: {},
+              height: 40
+            }, {
+              type: 'row',
+              content: [{
+                type: 'stack',
+                content: [{
+                  type: 'component',
+                  componentName: 'obsel_view',
+                  componentState: {},
+                  width: 30
+                }, {
+                  type: 'component',
+                  componentName: 'model_view',
+                  componentState: {}
+                }]
+              }, {
+                type: 'component',
+                componentName: 'style_editor',
+                componentState: {}
+              }]
+            }]
+          },{
+            type: 'component',
+            componentName: 'style_view',
+            componentState: {},
+          }]
+        };
+        // Element list
+        var list = {
+          'timeline': this.$.timeline,
+          'obsel_view': this.$.tosv,
+          'model_view': this.$.tmsv,
+          'style_editor': this.$.t3se,
+          'style_view': this.$.t3stylesheet
+        };
+        // Add the elements to the golden-layout
+        this.$.glc.registerComponents(list, config);
+      },
+
+      /**
+       * Loads the trace, the model of the trace, the stylesheet available for the trace.
+       *
+       * @method giveMeEverything
+       */
+      giveMeEverything: function() {
+        // Set an array with the loading texts.
+        this.set('_loadingArray', [
+          this.$.loading_1, this.$.loading_2, this.$.loading_3, this.$.loading_4, this.$.loading_5
+        ]);
+        // Update the visu each time an obsels package is downloaded.
+        this.$.traceLoader.addEventListener('PACKAGE_LOADED', function(evt) {
+          this.$.t3.updateVisu();
+        }.bind(this));
+        // When the trace is loaded, we load the model of the trace.
+        this.$.traceLoader.addEventListener('TRACE_READY', function(evt) {
+          this._changeLoadingStatus(0);
+          this.set('_trace', this.$.traceLoader.getTrace());
+          // TODO finir ici
+          this._loadModel();
+
+          this.$.pages.selected = 1;
+
+          setTimeout(function() {
+            this.$.traceLoader.loadObsels();
+
+            var begin = this.$.traceLoader.getBeginObsel().begin;
+            var end = this.$.traceLoader.getEndObsel().end;
+
+            this.$.t3.begin = this.$.t3s.begin = begin;
+            this.$.t3.end = this.$.t3s.end = end;
+
+            this.$.t3.initVisu();
+            this.$.t3s.initVisu();
+
+            this.$.t3s.updateVisu(begin, end);
+            this.$.t3.displayObsels(begin, end, []);
+
+          }.bind(this), 500);
+
+        }.bind(this));
+        // Load the trace
+        this.$.traceLoader.loadTrace();
+
+        this.$.t3.addEventListener('obselClicked', function(evt) {
+          this.set('_focusedObsel', evt.detail.obs);
+        }.bind(this));
+      },
+
+      /**
+       * Change the loading appearance.
+       *
+       * @param {!required} load {Number} Loading element to validate.
+       *
+       * @method _changeLoadingStatus
+       */
+      _changeLoadingStatus: function(load) {
+        this._loadingArray[load].classList.add('fgGreen');
+        this._loadingArray[load + 1].classList.remove('fade');
+      },
+
+      _loadModel: function() {
+        // Create the Model
+        this.set('_model', new Samotraces.Ktbs.Model(this._trace.model_uri));
+        // Load the Model
+        this._model.load()
+          .then(function() {
+            this.$.tmsv.refresh();
+            this.async(function() {
+              // Init the model simple view
+              this._initModelSimpleview();
+              // Get the stylesheets
+              this._loadStylesheet();
+            }, 100);
+          }.bind(this))
+          .catch(function(err) {
+            console.log(err);
+          });
+      },
+
+      _loadStylesheet: function(){
+        // Create a random stylesheet
+        this.$.t3stylesheet.createRandomStyle();
+        // Load the styles from th emodel
+        this.$.t3stylesheet.loadStylesheetsFromModel();
+        // Add the event listeners
+        this.$.t3stylesheet.addEventListener('template_changed', function(evt){
+          this.$.t3.updateVisu();
+        }.bind(this));
+        this.$.t3stylesheet.addEventListener('edit_rule', function(evt){
+          this.$.t3se.setRule(evt.detail.rule);
+        }.bind(this));
+        // Add an event listener on the stylesheet editor
+        this.$.t3se.addEventListener('APPLY_STYLE', function(evt){
+          this.$.t3stylesheet.addRule(evt.detail.rule);
+          this.$.t3.updateVisu();
+        }.bind(this));
+        this.$.t3se.addEventListener('UPDATE_STYLE', function(evt){
+          this.$.t3.updateVisu();
+          this.$.t3stylesheet.forceRefresh();
+        }.bind(this));
+      },
+
+
+      _initModelSimpleview: function() {
+        // Add an event for type or attribute selection
+        this.$.tmsv.addSelectionEvent('selected', 'icons:bookmark-border', function(evt, resource) {
+          if(resource.obj === 'type')
+            this.$.t3se.setType(resource.name.replace('#',"m:"));
+          else this.$.t3se.addAttribute(resource.name.replace('#','m:'));
+        }.bind(this));
+      }
+    });
+  </script>
+</dom-module>

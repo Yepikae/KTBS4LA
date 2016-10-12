@@ -1,0 +1,405 @@
+<link rel="import" href="./tgm-select-or-uri.html">
+<link rel="import" href="./tgm-simple-select.html">
+<link rel="import" href="./tgm-date.html">
+<link rel="import" href="./tgm-boolean.html">
+<link rel="import" href="./tgm-text-input.html">
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<dom-module id="taaabs-generic-method">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+
+
+    <h1 on-click='getRequestParameters'>YOLO</h1>
+
+    <h3>[[methodObject.label]]</h3>
+
+    <template is="dom-if" if="[[_isTraceSet]]">
+      <h5>Source trace uri: [[sourceTrace]]</h5>
+    </template>
+    <template is="dom-if" if="[[!_isTraceSet]]">
+      Trace is unset.
+    </template>
+
+    <h5>Paramaters list</h5>
+
+    <div id="parametersList"></div>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'taaabs-generic-method',
+
+      properties: {
+
+        /**
+         * Source trace URI.
+         *
+         * @attribute sourceTrace
+         * @type String
+         */
+        sourceTrace: {
+          type: String,
+          notify: true,
+          value: null,
+          observer: '_onTraceChange'
+        },
+
+        /**
+         * The source base URI.
+         *
+         * @attribute sourceBase
+         * @type String
+         */
+        sourceBase: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * Localization.
+         * fr, en.
+         *
+         * @attribute language
+         * @type String
+         */
+        language: {
+          type: String,
+          notify: true,
+          observer: '_onLanguageChange'
+        },
+
+        // TODO: REMOVE OBJECT
+        /**
+         * The method as described from sepc.
+         *
+         * @attribute methodObject
+         * @type Object
+         */
+        methodObject: {
+          type: Object,
+          notify: true,
+          value: {
+            "@id": "filter",
+            "@type": "BuiltinMethod",
+            "rdfs:label": [{
+              "@value": "filter",
+              "@language": "en"
+            }, {
+              "@value": "filtre",
+              "@language": "fr"
+            }],
+            "acceptsParameter": [{
+              "parameterName": "model",
+              "hasParameterType": "TraceModel",
+              "rdfs:label": [{
+                "@value": "target trace model",
+                "@language": "en"
+              }, {
+                "@value": "modèle de trace cible",
+                "@language": "fr"
+              }],
+              "rdfs:comment": [{
+                "@value": "Specifies the model of the transformed trace. If not provided, the same model as the source will be used.",
+                "@language": "en"
+              }, {
+                "@value": "Spécifie le modèle de la trace transformée. S'il n'est pas fourni, le même modèle que la trace source sera utilisé.",
+                "@language": "fr"
+              }, {
+                "@value": "TODO label and comment for all other parameters..."
+              }]
+            }, {
+              "parameterName": "origin",
+              "hasParameterType": "Origin"
+            }, {
+              "parameterName": "after",
+              "hasParameterType": "Timestamp"
+            }, {
+              "parameterName": "before",
+              "hasParameterType": "Timestamp"
+            }, {
+              "parameterName": "afterDT",
+              "hasParameterType": "xsd:dateTime"
+            }, {
+              "parameterName": "beforeDT",
+              "hasParameterType": "xsd:dateTime"
+            }, {
+              "parameterName": "otypes",
+              "hasParameterType": "ObselType",
+              "isMultivalued": true
+            }, {
+              "parameterName": "bgp",
+              "hasParameterType": "https://www.w3.org/TR/sparql11-query/#BasicGraphPatterns"
+            }]
+          }
+        },
+
+        /**
+         * The method request as it should be sent.
+         *
+         * @attribute methodRequest
+         * @type String
+         */
+        methodRequest: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * The different ktbs resources this component needs (trace, model, base, etc...)
+         *
+         * @attribute _ktbsResources
+         * @type Object
+         */
+        _ktbsResources: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * True if a request has been created. False otherwise.
+         *
+         * @attribute _isComplete
+         * @type Boolean
+         */
+        _isComplete: {
+          type: Boolean,
+          notify: true,
+          value: false
+        },
+
+        /**
+         * True if `sourceTrace` is set. False otherwise.
+         *
+         * @attribute _isTraceSet
+         * @type Boolean
+         */
+        _isTraceSet: {
+          type: Boolean,
+          notify: true,
+          value: false
+        },
+
+        /**
+         * List of parameter components.
+         *
+         * @attribute _componentList
+         * @type Array
+         */
+        _componentList: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+      },
+
+      /**
+       * Returns an object containing each parameter of the transformation.
+       *
+       * @return Returns a list of pair { 'parameter_name' : 'parameter_value' }; as an object.
+       *
+       * @method getRequestParameters
+       */
+      getRequestParameters: function() {
+
+        var params = {};
+
+        // We add every parameter to `params`.
+        for (var i = 0; i < this._componentList.length; i++) {
+          params[this._componentList[i].getParameterName()] = this._componentList[i].getParameterValue();
+        }
+
+        //TODO remove comment
+        // return params;
+
+        console.log(params);
+      },
+
+      /**
+       * Set the different parameter components.
+       *
+       * @method _setParametersList
+       */
+      _setParametersList: function() {
+
+        this.$.parametersList.innerHTML = "";
+
+        if (this._ktbsResources) {
+          for (var i = 0; i < this.methodObject.acceptsParameter.length; i++) {
+
+            var param = this.methodObject.acceptsParameter[i];
+
+            // Choose which component we'll need to use
+            //TODO : Fill this list.
+            var _listForSelectOrUri = ['TraceModel'];
+            var _listForSimpleSelect = ['ObselType'];
+            var _listForInputDate = ['xsd:dateTime', 'Timestamp'];
+            var _listForInputText = ['Origin', 'xsd:string'];
+            var _listForBoolean = ['xsd:boolean'];
+            var _listForNumber = ['xsd:integer'];
+
+            var component = null;
+            if (_listForSelectOrUri.indexOf(param.hasParameterType) !== -1) {
+              component = new tgmSelectOrUri();
+              //TODO complete with all cases
+              switch (param.hasParameterType) {
+                case 'TraceModel':
+
+                  // Get the models existing on the base.
+                  var models = [this._ktbsResources.trace.model_uri];
+                  this._ktbsResources.base.load_properties(['label'])
+                    .then(function(component, props) {
+
+                      for (var pI = 0; pI < props.length; pI++)
+                        if (props[pI]['@type'] === 'TraceModel')
+                          if (this._ktbsResources.base.getAbsoluteURLFromRelative(this._ktbsResources.base.uri, props[pI]['@id']) !== this._ktbsResources.trace.model_uri)
+                            models.push(this._ktbsResources.base.getAbsoluteURLFromRelative(this._ktbsResources.base.uri, props[pI]['@id']));
+
+                      component.set('list', models);
+
+                    }.bind(this, component))
+                    .catch(function(err) {
+                      console.log(err);
+                    });
+                  break;
+              }
+            } else if (_listForSimpleSelect.indexOf(param.hasParameterType) !== -1) {
+              component = new tgmSimpleSelect();
+              //TODO complete with all cases
+              switch (param.hasParameterType) {
+                case 'ObselType':
+
+                  if (this._ktbsResources.model.list_type_obsels.length < 1) {
+                    this._ktbsResources.model.load()
+                      .then(function(component, model) {
+                        this.set('_ktbsResources.model', model);
+                        var types = [];
+                        for(var i = 0 ; i < this._ktbsResources.model.list_type_obsels.length; i++){
+                          types.push({display:this._ktbsResources.model.list_type_obsels[i]['@id'].replace(/#/g,''),
+                            value:this._ktbsResources.model.uri+this._ktbsResources.model.list_type_obsels[i]['@id']});
+                        }
+                        component.set('list', types);
+                      }.bind(this, component))
+                      .catch(function(err) {
+                        console.log(err);
+                      })
+                  }
+                  else{
+                    var types = [];
+                    for(var i = 0 ; i < this._ktbsResources.model.list_type_obsels.length; i++){
+                      types.push({display:this._ktbsResources.model.list_type_obsels[i]['@id'].replace(/#/g,''),
+                        value:this._ktbsResources.model.getAbsoluteURLFromRelative(this._ktbsResources.model.uri, this._ktbsResources.model.list_type_obsels[i]['@id'])});
+                    }
+                    component.set('list', types);
+                  }
+                  break;
+              }
+              component.set('multiple', param.isMultivalued );
+
+            } else if (_listForInputDate.indexOf(param.hasParameterType) !== -1) {
+              component = new tgmDate();
+              component.set('exportFormat', param.hasParameterType);
+            } else if (_listForInputText.indexOf(param.hasParameterType) !== -1) {
+              component = new tgmTextInput();
+            } else if (_listForBoolean.indexOf(param.hasParameterType) !== -1) {
+              component = new tgmBoolean();
+            } else if (_listForNumber.indexOf(param.hasParameterType) !== -1) {
+
+            }
+
+            if (component) {
+
+              if( this.presets[param['parameterName']] !== null && this.presets[param['parameterName']] !== undefined ){
+                component.setValue( this.presets[param['parameterName']] );
+              }
+
+              this.push('_componentList', component);
+              component.set('name', param['parameterName']);
+
+              if (param['rdfs:comment']) {
+                for (var j = 0; j < param['rdfs:comment'].length; j++) {
+                  if (param['rdfs:comment'][j]['@language'] === this.language)
+                    component.comment = param['rdfs:comment'][j]['@value'];
+                }
+              }
+              this.$.parametersList.appendChild(component);
+            }
+          }
+        }
+
+      },
+
+      /**
+       * Change the i18n values.
+       *
+       * @method _onLanguageChange
+       */
+      _onLanguageChange: function() {
+        // Set the method label
+        var label = this.methodObject['@id'];
+        for (var i = 0; i < this.methodObject['rdfs:label'].length; i++) {
+          if (this.methodObject['rdfs:label'][i]['@language'] === this.language)
+            label = this.methodObject['rdfs:label'][i]['@value'];
+        }
+        this.set('methodObject.label', label);
+      },
+
+      /**
+       * Format the method object..
+       *
+       * @method _onMethodObjectChange
+       */
+      _onMethodObjectChange: function() {
+        if (this.methodObject) {
+          // Set the method label
+          var label = this.methodObject['@id'];
+          for (var i = 0; i < this.methodObject['rdfs:label'].length; i++) {
+            if (this.methodObject['rdfs:label'][i]['@language'] === this.language)
+              label = this.methodObject['rdfs:label'][i]['@value'];
+          }
+          this.set('methodObject.label', label);
+
+          //Set the parameters
+          this._setParametersList();
+        }
+      },
+
+      /**
+       * Get the trace model & base.
+       *
+       * @method _onTraceChange
+       */
+      _onTraceChange: function() {
+        if (this.sourceTrace) {
+          this.set('_isTraceSet', true);
+          this.set('_ktbsResources', {});
+          this.set('_ktbsResources.trace', new Samotraces.Ktbs.Trace(this.sourceTrace));
+          this._ktbsResources.trace.load()
+            .then(function() {
+              this.set('_ktbsResources.model', new Samotraces.Ktbs.Model(this._ktbsResources.trace.model_uri));
+              this.set('_ktbsResources.base', new Samotraces.Ktbs.Base(this._ktbsResources.trace.base_uri));
+              // Display the parameters list.
+              this._setParametersList();
+            }.bind(this))
+            .catch(function(err) {
+              console.log(err);
+            });
+
+        } else {
+          this.set('_isTraceSet', false);
+        }
+
+      }
+
+    });
+  </script>
+</dom-module>

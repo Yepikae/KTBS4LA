@@ -1,0 +1,177 @@
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+<dom-module id="taaabs-model-simpleview">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      :host .title {
+        border: solid 1px gray;
+        padding: 5px;
+        cursor: pointer;
+        font-size: 20px;
+      }
+
+      :host .content {
+        border: solid 1px gray;
+        padding: 5px;
+      }
+
+      :host .content div:nth-child(2n+1) {
+        background-color: rgba(144, 144, 144, 0.25);
+        padding: 3px;
+      }
+
+      :host iron-icon {
+        float: right;
+      }
+    </style>
+    <template is="dom-repeat" items="[[_typesWithAttr]]">
+      <div id="t_[[index]]" class="title">
+        [[item.id]]
+        <iron-icon icon="icons:arrow-drop-down" on-click="_onCollapseClick"></iron-icon>
+      </div>
+      <iron-collapse id="ic_[[index]]">
+        <div class="content">
+          <template is="dom-repeat" items="[[item.attrList]]">
+            <div>
+              [[item]]
+            </div>
+          </template>
+        </div>
+      </iron-collapse>
+    </template>
+  </template>
+  <script>
+    Polymer({
+      is: 'taaabs-model-simpleview',
+
+      properties: {
+        /**
+         * The model.
+         *
+         * @attribute model
+         * @type Object
+         */
+        model: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * The type list with their attributes.
+         *
+         * @attribute _typesWithAttr
+         * @type Array
+         */
+        _typesWithAttr: {
+          type: Array,
+          notify: true,
+          value: []
+        }
+      },
+
+      /**
+       * Refresh the view.
+       *
+       * @method refresh
+       */
+      refresh: function() {
+        // Reset the type list.
+        this.set('_typesWithAttr', []);
+        var types = this.model.list_type_obsels;
+        var attributes = this.model.list_type_attributes;
+        // List every type and their attributes
+        for (var i = 0; i < types.length; i++) {
+          var typeId = types[i]['@id'];
+          var tmp_type_with_attr = {
+            'id': typeId,
+            'attrList': []
+          };
+          // List all the attributes of this type
+          for (var j = 0; j < attributes.length; j++) {
+            for (var k = 0; k < attributes[j].hasAttributeObselType.length; k++) {
+              if (typeId === attributes[j].hasAttributeObselType[k]) {
+                tmp_type_with_attr.attrList.push(attributes[j]['@id']);
+              }
+            }
+          }
+          this.push('_typesWithAttr', tmp_type_with_attr);
+        }
+      },
+
+      addSelectionEvent: function(name, iconName, callback) {
+
+        var icon = null;
+
+        var eventFunction = function(index, evt) {
+          callback(evt, {
+            'obj': 'type',
+            'name': this._typesWithAttr[index].id
+          });
+        };
+
+        var eventFunction2 = function(indexType, indexAttr, evt){
+          callback(evt, {
+            'obj': 'attribute',
+            'name': this._typesWithAttr[indexType].attrList[indexAttr]
+          });
+        };
+
+        for (var i = 0; i < this._typesWithAttr.length; i++) {
+          icon = document.createElement('iron-icon');
+          icon.icon = iconName;
+          //icon.addEventListener('click', eventFunction.bind(this, i));
+          icon.addEventListener('click', eventFunction.bind(this, i));
+          var id = '#t_' + i;
+          this.$$(id).appendChild(icon);
+          // Get the divs of the attributes of the current type
+          id = '#ic_' + i;
+          var fc = this.$$(id).childNodes;
+          var j = 0;
+          while (fc[j].nodeName != 'DIV') {
+            j++;
+          }
+          var divs_tmp = fc[j].childNodes;
+          var divs = [];
+          for (j = 0; j < divs_tmp.length; j++)
+            if (divs_tmp[j].nodeName === 'DIV') divs.push(divs_tmp[j]);
+          // Set the event for each attribute of the curren type
+          for(j = 0; j < this._typesWithAttr[i].attrList.length; j++){
+            icon = document.createElement('iron-icon');
+            icon.icon = iconName;
+            icon.addEventListener('click', eventFunction2.bind(this, i, j));
+            divs[j].appendChild(icon);
+          }
+        }
+      },
+
+      _onCollapseClick: function(evt) {
+        var id = '#ic_' + evt.model.index;
+        var content = this.$$(id);
+        content.toggle();
+
+        var fc = content.childNodes;
+
+        console.log(fc);
+
+        var i = 0;
+        while (fc[i].nodeName != 'DIV') {
+          i++;
+        }
+
+        var divs_tmp = fc[i].childNodes;
+        var divs = [];
+        for (i = 0; i < divs_tmp.length; i++)
+          if (divs_tmp[i].nodeName === 'DIV') divs.push(divs_tmp[i]);
+
+        console.log(divs);
+
+      }
+    });
+  </script>
+</dom-module>

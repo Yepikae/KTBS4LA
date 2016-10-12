@@ -1,0 +1,403 @@
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<link rel="import" href="../taaabs-trace-timeline/taaabs-trace-timeline-timeline.html">
+<link rel="import" href="../taaabs-trace-timeline/taaabs-trace-timeline-visu.html">
+
+
+<dom-module id="sparql-obsel-timeline-handler">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      :host #tttv {
+        border-top: solid 1px grey;
+      }
+    </style>
+
+    <template is="dom-repeat" items="[[_respObsels]]">
+      <div >
+        <iron-icon icon="timeline-symbols:[[item.symbol.shape]]" style$="color: [[item.symbol.color]]"></iron-icon>
+
+        <!-- TODO Choose which is better -->
+        <!--
+        <template is="dom-repeat" items="[[item.triplet]]">
+          <span>[[item]]</span>
+        </template>
+        -->
+         [[item.spareRequest]]
+      </div>
+    </template>
+
+    <taaabs-trace-timeline-visu id="tttv" obsels="[[_obsels]]" begin="[[_traceBegin]]" end="[[_traceEnd]]" format="DATE" grad="{{_grad}}" style-template="[[_traceStyleSheet]]" width="100%">
+    </taaabs-trace-timeline-visu>
+
+    <taaabs-trace-timeline-timeline id="tttt" begin="[[_traceBegin]]" end="[[_traceEnd]]" format="DATE" grad="{{_grad}}" width="100%">
+    </taaabs-trace-timeline-timeline>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'sparql-obsel-timeline-handler',
+
+      properties: {
+
+        /**
+         * List of the sparql response vars.
+         *
+         * @attribute _respVars
+         * @type Array
+         */
+        _respVars: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        /**
+         * List of the sparql response obsels.
+         *
+         * @attribute _respObsels
+         * @type Array
+         */
+        _respObsels: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        /**
+         * The list of obsels.
+         *
+         * @attribute _obsels
+         * @type Array
+         */
+        _obsels: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        /**
+         * First timestamp of the trace.
+         *
+         * @attribute _traceBegin
+         * @type Number
+         */
+        _traceBegin: {
+          type: Number,
+          notify: true,
+          value: Number.POSITIVE_INFINITY
+        },
+
+        /**
+         * Lst timestamp of the trace.
+         *
+         * @attribute _traceEnd
+         * @type Number
+         */
+        _traceEnd: {
+          type: Number,
+          notify: true,
+          value: Number.NEGATIVE_INFINITY
+        },
+
+        /**
+         * Shared graduation between the timeline and the visualisation.
+         *
+         * @attribute _grad
+         * @type Array
+         */
+        _grad: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        /**
+         * Stylesheet.
+         *
+         * @attribute _traceStyleSheet
+         * @type String
+         */
+        _traceStyleSheet: {
+          type: String,
+          notify: true,
+          value: ""
+        }
+
+      },
+
+      /**
+       * Transform a sparql response (String) to a list of obsel, then displays it in a timeline.
+       *
+       * @param {!required} response {String} The sparql response.
+       *
+       * @param {!required} sparqlRequest {String} The sparql request.
+       *
+       * @param {!required} spareRequest {String} The spare request.
+       *
+       * @method format
+       */
+      format: function(response, sparqlRequest, spareRequest) {
+
+        // Get the sparql request parts.
+        var _tmp = sparqlRequest.replace(/prefix.*\n/g, '');
+        var _sparqlParts = _tmp.split('union');
+
+        // Get the spare requests.
+        var _spareParts = spareRequest.split('.');
+
+        this.set('_respVars', []);
+        this.set('_respObsels', []);
+        this.set('_obsels', []);
+        this.set('_traceStyleSheet','');
+
+        // For every _sparePart, create a _respObsel.
+        for (var i = 0; i < _spareParts.length; i++) {
+          if (_spareParts[i] !== "")
+            this.push('_respObsels', {
+              triplet: [],
+              obsels: [],
+              spareRequest: _spareParts[i]
+            });
+        }
+
+        var _response = JSON.parse(response);
+
+        // Retrieve every triplet from the response.
+        this._get_every_triplet(_response, _sparqlParts);
+
+        var obsels = {};
+
+        // Create the obsels from each line of the response values.
+        for (i = 0; i < _response.results.bindings.length; i++) {
+
+          var _line = _response.results.bindings[i];
+          var _triplets = {};
+
+          // For each value of the line, we check to which var this value belongs,
+          // and then, if this value belongs to an obsel triplet, we reconstruct this triplet
+          // Finally, we add this triplet to an obsel
+          for (var j in _line) {
+
+            var _ids = {};
+
+            // If the var is "spare like".
+            if (j.search(/(sobs|pobs|oobs)/) !== -1) {
+
+              // We get the var id (the number at the end of sobs#, pobs# or oobs#).
+              var _index = j.match(/\d/)[0];
+
+              // We create/complete the triplet
+              (_triplets[_index]) ? _triplets[_index].push(j): _triplets[_index] = [j];
+
+              // If the triplet is complete
+              if (_triplets[_index].length === 3) {
+
+                // Sort the triplets as sobs, pobs, oobs.
+                _triplets[_index].sort(this._compare_triplets_var);
+
+                // Create/complete an obsel with that triplet.
+                if (obsels[_line[_triplets[_index][0]].value]) {
+                  obsels[_line[_triplets[_index][0]].value][_line[_triplets[_index][1]].value] = _line[_triplets[_index][2]].value;
+                } else {
+
+                  var _predicat = _line[_triplets[_index][1]].value;
+
+                  obsels[_line[_triplets[_index][0]].value] = {
+                    "@id": _line[_triplets[_index][0]].value,
+                    "spare_triplet": _triplets[_index]
+                  };
+                  obsels[_line[_triplets[_index][0]].value][_predicat] = _line[_triplets[_index][2]].value
+                }
+                _ids[_line[_triplets[_index][0]].value] = true;
+
+                // For each triplet encountered, if we stopped setting an obsel, it's probably because we won't encounter any of its triplet anymore
+                // Therefore, we had this obsel to the obsel list of its spare request.
+                // TODO Check forlimit cases.
+                for (var k in obsels) {
+                  if (!_ids[k]) {
+                    for (var l = 0; l < this._respObsels.length; l++) {
+                      if( this._respObsels[l].triplet.length === 3 ){
+                        var _respObselsMatch = this._respObsels[l].triplet[0].match(/\d/)[0];
+                        var _obselMatch = obsels[k]["spare_triplet"][0].match(/\d/)[0];
+                        if (_respObselsMatch === _obselMatch) {
+                          this._respObsels[l].obsels.push(obsels[k]);
+                        }
+                      }
+                    }
+                    delete obsels[k];
+                  }
+                }
+
+              }
+
+            }
+
+          }
+        }
+
+        this._formatObsels();
+      },
+
+      /**
+       * Set `_obsels`.
+       *
+       * @method _formatObsels
+       */
+      _formatObsels: function() {
+
+        function get_random_symbol(){
+          var color = '#'+Math.floor(Math.random()*16777215).toString(16);
+          var shape = ['DIAMOND','CIRCLE','SQUARE','STAR'][Math.floor(Math.random()*4)];
+          return {color:color,shape:shape};
+        }
+
+
+
+        for( var i = 0 ; i < this._respObsels.length; i++ ){
+
+          for( var j = 0 ; j < this._respObsels[i].obsels.length; j++ ){
+
+            this._respObsels[i].obsels[j].begin = this._respObsels[i].obsels[j]['http://liris.cnrs.fr/silex/2009/ktbs#hasBegin'];
+            delete this._respObsels[i].obsels[j]['http://liris.cnrs.fr/silex/2009/ktbs#hasBegin'];
+
+            this._respObsels[i].obsels[j].end = this._respObsels[i].obsels[j]['http://liris.cnrs.fr/silex/2009/ktbs#hasEnd'];
+            delete this._respObsels[i].obsels[j]['http://liris.cnrs.fr/silex/2009/ktbs#hasEnd'];
+
+            this._respObsels[i].obsels[j].spare_request = this._respObsels[i].spareRequest;
+
+            this.push('_obsels', this._respObsels[i].obsels[j]);
+
+            if( this._respObsels[i].obsels[j].begin < this._traceBegin ){
+              this.set('_traceBegin',  Number(this._respObsels[i].obsels[j].begin));
+            }
+            if(  this._respObsels[i].obsels[j].end > this._traceEnd ){
+              this.set('_traceEnd',  Number(this._respObsels[i].obsels[j].end));
+            }
+
+          }
+
+          var symbol = get_random_symbol();
+          this.set('_traceStyleSheet',
+            this._traceStyleSheet +
+            '.spare_request["'+this._respObsels[i].spareRequest+'"]'+JSON.stringify(symbol).replace(/"/g,'')+"\n");
+
+          this.set('_respObsels.#'+i+'.symbol', symbol);
+          console.log( this._traceStyleSheet );
+        }
+
+        this._initTimeline();
+
+      },
+
+      /**
+       * Initialize the timeline.
+       *
+       * @method _initTimeline
+       */
+      _initTimeline: function(){
+        this.$.tttv.initVisu();
+        this.$.tttt.initVisu();
+        this.$.tttv.displayObsels(this._traceBegin, this._traceEnd, this._obsels);
+        this.$.tttt.updateZoomLine(this._traceBegin, this._traceEnd);
+
+        var that = this;
+        this.$.tttt.addEventListener('zlBeginMoved', function() {
+          that.$.tttv.displayObsels(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer, that._getObselsInRange(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer));
+          that.$.tttt.updateZoomLine(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer);
+        });
+        this.$.tttt.addEventListener('zlEndMoved', function() {
+          that.$.tttv.displayObsels(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer, that._getObselsInRange(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer));
+          that.$.tttt.updateZoomLine(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer);
+        });
+        this.$.tttt.addEventListener('zlGlobalMoved', function() {
+          that.$.tttv.displayObsels(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer, that._getObselsInRange(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer));
+          that.$.tttt.updateZoomLine(that.$.tttt._zlBeginPointer, that.$.tttt._zlEndPointer);
+        });
+        this.$.tttv.addEventListener('zoom', function() {
+          var begin = that.$.tttv._zoomBegin;
+          var end = that.$.tttv._zoomEnd;
+          that.$.tttv.displayObsels(begin, end, that._getObselsInRange(that.$.tttv._zoomBegin, that.$.tttv._zoomEnd));
+          that.$.tttt.updateZoomLine(begin, end);
+        });
+        this.$.tttv.addEventListener('obselClicked', function(e) {
+          that.set('_obselSelected', e.detail.obs);
+        });
+      },
+
+      _getObselsInRange: function(begin, end) {
+        var obsels = [];
+        var i = 0;
+        while (i < this._obsels.length) {
+          if( this._obsels[i].begin >= begin && this._obsels[i].end <= end )
+            obsels.push(this._obsels[i]);
+          i++;
+        }
+        return obsels;
+      },
+
+      //////////////////////////////
+      // FORMAT PROCESS FUNCTIONS //
+      //////////////////////////////
+
+      /**
+       * Retrieve every "spare like" (sobs#, pobs#, oobs#) triplets from the vars of the sparql response.
+       *
+       * @param {!required} _response {String} The sparql response object .
+       *
+       * @method _get_every_triplet
+       */
+        _get_every_triplet: function(_response, _sparqlParts) {
+
+        var _triplets = {};
+
+        // For each var of the response, we look for a "spare like" triplet ( sobs#, pobs# or oobs# )
+        // And we add them to _trpilets
+        for (i = 0; i < _response.head.vars.length; i++) {
+          this.push('_respVars', _response.head.vars[i]);
+          if (_response.head.vars[i].search(/(sobs|pobs|oobs)/) !== -1) {
+            var _index = _response.head.vars[i].match(/\d/);
+            (_triplets[_index]) ? _triplets[_index].push(_response.head.vars[i]): _triplets[_index] = [_response.head.vars[i]];
+          }
+        }
+
+        // Once every triplet is collected, we set the corresponding _respObsel with each triplet.
+        // To achieve this, we look for the triplets inside each part of the sparql request.
+        for (var i in _triplets) {
+          if (_triplets[i].length < 3) {
+            delete _triplets[i];
+          } else {
+            for (var j = 0; j < _sparqlParts.length; j++) {
+              if (_sparqlParts[j].indexOf(_triplets[i][0]) !== -1 && _sparqlParts[j].indexOf(_triplets[i][1]) !== -1 && _sparqlParts[j].indexOf(_triplets[i][2]) !== -1) {
+                this._respObsels[j].triplet = _triplets[i];
+              }
+            }
+          }
+        }
+      },
+
+      /**
+       * Compare two triplet var to order them as sobs < pobs < oobs.
+       *
+       * @param {!required} a {String} The first element.
+       *
+       * @param {!required} b {String} The second element.
+       *
+       * @method _compare_triplets_var
+       */
+      _compare_triplets_var: function(a, b) {
+        if (a.indexOf("sobs") !== -1 || b.indexOf("oobs") !== -1) {
+          return -1;
+        }
+        if (b.indexOf("sobs") !== -1 || a.indexOf("oobs") !== -1) {
+          return 1;
+        }
+        // a must be equal to b
+        return 0;
+      }
+    });
+  </script>
+</dom-module>

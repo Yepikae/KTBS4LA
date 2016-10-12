@@ -1,0 +1,93 @@
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<dom-module id="tgm-text-input">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <p>
+      [[comment]]
+    </p>
+
+    <input id='inputValue' class="inputWithIcon" style="outline:0" value="{{value::input}}">
+    <iron-icon id="inputValueIcon" class="inputWithIconIcon fgDarkBlue" icon="icons:create"></iron-icon>
+    </input>
+    <iron-icon icon="icons:clear" on-click="_onClearClick"></iron-icon>
+
+  </template>
+  <script>
+    var tgmTextInput = Polymer({
+      is: 'tgm-text-input',
+
+      properties: {
+
+        /**
+         * The parameter name.
+         *
+         * @attribute name
+         * @type String
+         */
+        name: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * The comment of the paramater.
+         *
+         * @attribute comment
+         * @type String
+         */
+        comment: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+
+        /**
+         * The chosen value.
+         *
+         * @attribute value
+         * @type String
+         */
+        value: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+      },
+
+      /**
+       * Returns the parameter name.
+       *
+       * @method getParameterName
+       */
+      getParameterName: function() {
+        return this.name;
+      },
+
+      /**
+       * Returns the parameter value.
+       *
+       * @method getParameterValue
+       */
+      getParameterValue: function() {
+        return this.value;
+      },
+
+      /**
+       * Clear the values.
+       *
+       * @method _onClearClick
+       */
+      _onClearClick: function() {
+        this.set('value', null);
+      }
+    });
+  </script>
+</dom-module>

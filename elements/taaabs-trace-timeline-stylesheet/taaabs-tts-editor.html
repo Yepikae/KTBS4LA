@@ -1,4 +1,4 @@
-<link rel="import" href="taaabs-trace-timeline-icons.html">
+<link rel="import" href="../taaabs-trace-timelineXX/taaabs-trace-timeline-icons.html">
 <link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
 
 <link rel="import" href="../../bower_components/paper-color-picker/paper-color-picker.html">
@@ -52,23 +52,20 @@
           <iron-icon id="symbolIconSTAR" class="symbolIcon" icon="timeline-symbols:STAR" on-click="_onSymbolClicked"></iron-icon>
           <iron-icon id="symbolIconCIRCLE" class="symbolIcon" icon="timeline-symbols:CIRCLE" on-click="_onSymbolClicked"></iron-icon>
           <iron-icon id="symbolIconSQUARE" class="symbolIcon" icon="timeline-symbols:SQUARE" on-click="_onSymbolClicked"></iron-icon>
-          <img class="colorPickerBtn" src="colors.png" on-click="_onColorPickerClicked"></img>
+          <iron-icon class="colorPickerBtn" src="colors.png" on-click="_onColorPickerClicked"></iron-icon>
+          <span class="colorPickerBtn" on-click="_onResetClicked"> reset </span>
         </div>
         <div class="cell" style="width:30px;padding: 0 5px 0 5px">
         </div>
       </div>
 
       <div class="table">
-        <div class="cell" style$="padding: 0 5px 0 5px; {{_getTypeOpacity(_rule)}}">
+        <div class="cell" style$="padding: 0 5px 0 5px; {{_getTypeOpacity(_typeName)}}">
           TYPE
         </div>
-        <div class="cell" style="padding: 0 5px 0 5px">
-          <input placeholder="search" class="inputWithIcon" style="outline:0" value="{{_rule.typeObsel.name::input}}">
-          <iron-icon class="inputWithIconIcon fgDarkBlue" icon="icons:create"></iron-icon>
+        <div class="cell" style$="padding: 0 5px 0 5px; {{_getTypeOpacity(_typeName)}}">
+          <input placeholder="type" class="inputWithIcon" style="outline:0" value="{{_typeName::input}}">
           </input>
-        </div>
-        <div class="cell" style="width:30px;padding: 0 5px 0 5px">
-          <iron-icon style="width: 20px" icon="icons:add" class="fgGreen fgGreenH"></iron-icon>
         </div>
       </div>
 
@@ -81,7 +78,7 @@
               </input>
             </div>
             <div class="cell" style="width:80px;padding: 0 5px 0 5px">
-              <select>
+              <select on-change="_onOperatorChanged">
                 <option selected value="==">==</option>
                 <option value=">">></option>
                 <option value=">=">>=</option>
@@ -97,7 +94,7 @@
               </input>
             </div>
             <div class="cell" style="width:30px;padding: 0 5px 0 5px">
-              <iron-icon style="width: 20px" icon="icons:close" class="fgRed fgRedH"></iron-icon>
+              <iron-icon style="width: 20px" icon="icons:close" class="fgRed fgRedH" on-click="_onDeleteAttributeClicked"></iron-icon>
             </div>
           </div>
         </template>
@@ -146,6 +143,13 @@
           }
         },
 
+        _typeName: {
+          type: String,
+          notify: true,
+          value: "",
+          observer: '_onTypeNameChange'
+        },
+
         /**
          * True if the current rule already exists. False ohterwise.
          *
@@ -161,7 +165,7 @@
       },
 
       observers: [
-        '_onColorFromPickerChanged(_colorFromPicker.red)'
+        '_onColorFromPickerChanged(_colorFromPicker.red,_colorFromPicker.green,_colorFromPicker.blue)'
       ],
 
       /////////////////////
@@ -177,7 +181,7 @@
       },
 
       /**
-       * Set the type of the `rule`.
+       * Set `_typeName`.
        *
        * @param {!required} type {String} The type to set..
        *
@@ -185,11 +189,7 @@
        */
       setType: function(type) {
 
-        this.set('_rule.typeObsel',{
-          name: type
-        });
-
-
+        this.set('_typeName', type);
 
       },
 
@@ -200,28 +200,42 @@
        *
        * @method setRule
        */
-        setRule: function(rule) {
+      setRule: function(rule) {
         this.set('_isAnExistingRule', true);
+
+        this.$['symbolIcon' + this._rule.symbol.shape].style.opacity = 0.37;
+        this.$['symbolIcon' + this._rule.symbol.shape].style.color = 'grey';
+
         this.set('_rule', rule);
+
+        if (this._rule.typeObsel)
+          this.set('_typeName', this._rule.typeObsel.name);
+
+        this.$['symbolIcon' + this._rule.symbol.shape].style.opacity = 1;
+        this.$['symbolIcon' + this._rule.symbol.shape].style.color = this._rule.symbol.color;
       },
 
       //////////////////
       // UI FUNCTIONS //
       //////////////////
 
-      _getTypeOpacity: function() {
-        if (this._rule) {
-          if (this._rule.typeObsel)
-            return "opacity: 1";
-          else return "opacity: 0.37";
-        }
+      _getTypeOpacity: function(typeName) {
+
+        if (typeName !== "")
+          return "opacity: 1";
+        else return "opacity: 0.37";
+
       },
 
       _onApplyClicked: function() {
+
+        this.$['symbolIcon' + this._rule.symbol.shape].style.opacity = 0.37;
+        this.$['symbolIcon' + this._rule.symbol.shape].style.color = 'grey';
+
         var style = this._rule;
         if (!this._isAnExistingRule) {
           this.fire('APPLY_STYLE', {
-            style: style
+            rule: style
           });
         } else {
           this.fire('UPDATE_STYLE');
@@ -236,7 +250,9 @@
             shape: 'DIAMOND',
             color: '#21b2a6'
           }
-        })
+        });
+
+        this.set('_typeName', "");
       },
 
       _onSymbolClicked: function(e) {
@@ -253,11 +269,53 @@
         this.$.picker.open();
       },
 
+      /**
+       * Trigerred wheb the user changes a operator. Applies that operator.
+       *
+       * @param {!required} e {String} Event from click.
+       *
+       * @method _onOperatorChanged
+       */
+      _onOperatorChanged: function(e) {
+        e.model.item.operator = e.target.options[e.target.selectedIndex].value;
+        console.log(e.target.options[e.target.selectedIndex].value);
+      },
+
+      /**
+       * Remove the selected attribute from the `_rule`.
+       *
+       * @param {!required} e {String} Click event..
+       *
+       * @method _onDeleteAttributeClicked
+       */
+      _onDeleteAttributeClicked: function(e) {
+        this.splice('_rule.attributes', e.model.index, 1);
+      },
+
+      /**
+       * Reset the `_rule`.
+       *
+       * @method _onResetClicked
+       */
+      _onResetClicked: function() {
+        this.set('_rule', {
+          typeObsel: null,
+          attributes: [],
+          enabled: true,
+          symbol: {
+            shape: 'DIAMOND',
+            color: '#21b2a6'
+          }
+        });
+
+        this.set('_typeName', "");
+      },
+
       ///////////////////////
       // PROCESS FUNCTIONS //
       ///////////////////////
 
-      _onColorFromPickerChanged: function() {
+        _onColorFromPickerChanged: function() {
         if (this._colorFromPicker) {
           var hex = "#" +
             ("0" + parseInt(this._colorFromPicker['red'], 10).toString(16)).slice(-2) +
@@ -266,6 +324,23 @@
 
           this.set('_rule.symbol.color', hex);
           this.$['symbolIcon' + this._rule.symbol.shape].style.color = hex;
+        }
+      },
+
+      /**
+       * Triggered when `_typeName` changes. Set the `_rule.typeObsel` attribute according to `_typeName`.
+       *
+       * @method _onTypeNameChange
+       */
+      _onTypeNameChange: function() {
+        if (this._rule) {
+          if (this._typeName === "") {
+            this.set('_rule.typeObsel', null);
+          } else {
+            this.set("_rule.typeObsel", {
+              name: this._typeName
+            })
+          }
         }
       }
 

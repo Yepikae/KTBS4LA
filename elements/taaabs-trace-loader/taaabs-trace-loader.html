@@ -1,0 +1,281 @@
+<dom-module id="taaabs-trace-loader">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'taaabs-trace-loader',
+
+      /**
+       * Fired when the trace is successfully loaded.
+       *
+       * @event TRACE_READY
+       */
+
+      properties: {
+        /**
+         * The trace URL.
+         *
+         * @attribute traceUrl
+         * @type String
+         */
+        traceUrl: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * The list of obsels of the trace.
+         *
+         * @attribute obsels
+         * @type Array
+         */
+        obsels: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        /**
+         * The trace.
+         *
+         * @attribute _trace
+         * @type Object
+         */
+        _trace: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * The first obsel of the trace.
+         *
+         * @attribute _bObsel
+         * @type Object
+         */
+        _bObsel: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * The last obsel of the trace.
+         *
+         * @attribute _eObsel
+         * @type Object
+         */
+        _eObsel: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * The last downloaded obsel.
+         *
+         * @attribute _lObsel
+         * @type Object
+         */
+        _lObsel: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+      },
+
+      ready: function() {},
+
+      attached: function() {},
+
+      /**
+       * Load the trace from its URL.
+       *
+       * @method loadTrace
+       */
+      loadTrace: function() {
+        console.log(this.traceUrl);
+        this.set('_trace', new Samotraces.Ktbs.Trace(this.traceUrl));
+        this._trace.load()
+          .then(function() {
+            // TODO GET UNIT
+            this._getBeginObsel();
+          }.bind(this))
+          .catch(function(err) {
+            console.log(err);
+          });
+      },
+
+      /**
+       * Retrieve the first obsel of the trace.
+       *
+       * @method _getBeginObsel
+       */
+      _getBeginObsel: function() {
+        // Get the obsel with the property limit = 1, for getting only the first obsel.
+        this._trace.list_obsels({
+            'limit': '1'
+          })
+          .then(function(list) {
+            // Set the first obsel
+            this.set('_bObsel', list[0]);
+            // Get the last obsel
+            this._getEndObsel();
+          }.bind(this))
+          .catch(function(err) {
+            console.log(err);
+          });
+      },
+
+      /**
+       * Retrieve the last obsel of the trace.
+       *
+       * @method _getEndObsel
+       */
+      _getEndObsel: function() {
+        this._trace.list_obsels({
+            'limit': '1',
+            'reverse': 'true'
+          })
+          .then(function(list) {
+            // Set the last obsel
+            this.set('_eObsel', list[0]);
+            this.fire('TRACE_READY');
+          }.bind(this))
+          .catch(function(err) {
+            console.log(err);
+          });
+      },
+
+      /**
+       * Download the obsels between a begin time and an end time.
+       *
+       * @param {!required} begin {String} The begin time.
+       * @param {!required} end {String} The end time.
+       * @param {!required} limit {String} The number of obsel to download each time.
+       *
+       * @method loadObsels
+       */
+      loadObsels: function(begin, end, limit) {
+        begin = begin || this._bObsel.begin;
+        end = end || this._eObsel.end;
+        limit = limit || 100;
+        // Reset the list of obsels
+        this.set('obsels', []);
+        // Load the first package
+        this._trace.list_obsels({
+            'limit': limit,
+            'maxe': end
+          })
+          .then(function(list) {
+            // If we successfully downloaded a list of obsels
+            if (list.length > 0) {
+              // We add the new obsels to the last one
+              for (var i = 0; i < list.length; i++) {
+                this.push('obsels', list[i]);
+              }
+              // We set the last obsel.
+              this.set('_lObsel', list[list.length - 1]);
+              // We fire that we successfully downloaded an obsel.
+              this.fire('PACKAGE_LOADED');
+              // And we get the next obsels
+              this._loadObsels(this._lObsel['@id'], limit, end);
+            }
+          }.bind(this))
+          .catch(function(err) {
+            console.log(err);
+          });
+      },
+
+      /**
+       * Return the `trace`.
+       *
+       * @method getTrace
+       */
+      getTrace: function() {
+        return this._trace;
+      },
+
+      /**
+       * Returns the list of downloaded obsels.
+       *
+       * @method getObsels
+       */
+      getObsels: function() {
+        return this.obsels;
+      },
+
+      /**
+       * Returns the first obsel of the trace.
+       *
+       * @method getObsels
+       */
+      getBeginObsel: function() {
+        return this._bObsel;
+      },
+
+      /**
+       * Returns the last obsel of the trace.
+       *
+       * @method getObsels
+       */
+      getEndObsel: function() {
+        return this._eObsel;
+      },
+
+      /**
+       * Returns the last downloaded obsel.
+       *
+       * @method getObsels
+       */
+      getLastObsel: function() {
+        return this._lObsel;
+      },
+
+      /**
+       * Download the obsels after another, within a limit, and before an end time.
+       * If the request successfully load some obsels, calls `_loadObsels`.
+       *
+       * @param {!required} after {String} The id of the prior obsel.
+       * @param {!required} limit {String} The number of obsel to download each time.
+       * @param {!required} maxe {String} The end time.
+       *
+       * @method loadObsels
+       */
+      _loadObsels: function(after, limit, maxe) {
+        this._trace.list_obsels({
+            'after': after,
+            'limit': limit,
+            'maxe': maxe
+          })
+          .then(function(list) {
+            // If we successfully downloaded a list of obsels
+            if (list.length > 0) {
+              // We add the new obsels to the last one
+              for (var i = 0; i < list.length; i++) {
+                this.push('obsels', list[i]);
+              }
+              // We set the last obsel.
+              this.set('_lObsel', list[list.length - 1]);
+              // We fire that we successfully downloaded an obsel.
+              this.fire('PACKAGE_LOADED');
+              // And we get the next obsels
+              this._loadObsels(this._lObsel['@id'], limit, maxe);
+            }
+          }.bind(this))
+          .catch(function(err) {
+            console.log(err);
+          });
+
+      }
+
+    });
+  </script>
+</dom-module>

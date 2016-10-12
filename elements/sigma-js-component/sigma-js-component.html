@@ -1,16 +1,11 @@
+<link rel="import" href="../../bower_components/iron-resizable-behavior/iron-resizable-behavior.html">
+
 <dom-module id="sigma-js-component">
   <template>
     <style>
-      :host{
+      :host {
         display: block;
       }
-
-      :host #canvas{
-        background-color: [[bgColor]];
-        height: [[height]];
-        width: [[width]];
-      }
-
     </style>
     <div id="canvas"></div>
   </template>
@@ -19,149 +14,339 @@
     Polymer({
       is: "sigma-js-component",
 
+      /**
+       * Fired when a node is clicked.
+       * Returns the node object.
+       *
+       * @event NODE_CLICKED
+       */
+
       properties: {
 
-        //////////////
-        // CSS VARS //
-        //////////////
+        /**
+         * If true, initialize the `_renderer` as soone as attached.
+         * Otherwise, do nothing.
+         *
+         * @attribute autoStart
+         * @type Boolean
+         */
+        autoStart: {
+          type: Boolean,
+          notify: true,
+          value: false
+        },
 
+        /**
+         * Background color of the canvas.
+         *
+         * @attribute bgColor
+         * @type String
+         */
         bgColor: {
           type: String,
           value: "#1e1e1e"
         },
 
+        /**
+         * Height of the canvas.
+         *
+         * @attribute height
+         * @type Number
+         */
         height: {
-          type: String,
-          value: "500px"
+          type: Number,
+          value: 500
         },
 
+        /**
+         * Width of the canvas.
+         *
+         * @attribute width
+         * @type Number
+         */
         width: {
-          type: String,
-          value: "1000px"
+          type: Number,
+          value: 1000
         },
 
-        ////////////////
-        // SIGMA VARS //
-        ////////////////
+        /**
+         * True if the `_renderer` should strech with the pixi-js-component width.
+         *
+         * @attribute flexWidth
+         * @type Boolean
+         */
+        flexWidth: {
+          type: Boolean,
+          notify: true,
+          value: false,
+          observer: '_defineAutoStrechBehavior'
+        },
 
+        /**
+         * True if the `_renderer` should strech with the pixi-js-component height.
+         *
+         * @attribute flexHeight
+         * @type Boolean
+         */
+        flexHeight: {
+          type: Boolean,
+          notify: true,
+          value: false,
+          observer: '_defineAutoStrechBehavior'
+        },
+
+        /**
+         * Sigmajs main object.
+         *
+         * @attribute _sigma
+         * @type Object
+         */
         _sigma: {
           type: Object,
           notify: true,
           value: null
         },
 
+        /**
+         * `sigma` configuration.
+         *
+         * @attribute settings
+         * @type Object
+         */
         settings: {
           type: Object,
           notify: true,
-          value: function(){
+          value: function() {
             return {
               defaultLabelColor: '#fff'
-            }
+            };
           }
         }
 
       },
 
-      ready: function(){
-        this.setGraph();
-      },
+      behaviors: [Polymer.IronResizableBehavior],
 
-      attached: function(){
-        var sBrowser = navigator.userAgent;
-        if (sBrowser.indexOf("Firefox") > -1) {
-          this.$.canvas.style.width = this.width;
-          this.$.canvas.style.height = this.height;
-          this.$.canvas.style.backgroundColor = this.bgColor;
+      ready: function() {},
+
+      attached: function() {
+        // Set the right size!
+        this._resizeCanvas(null);
+        this.$.canvas.style.backgroundColor = this.bgColor;
+        // If we start as soon as attached.
+        if (this.autoStart) {
+          // Init the graph.
+          this.setGraph();
         }
       },
 
-      setGraph: function( graph, settings ){
-        var graph = graph || {nodes:[],edges:[]};
-        this.$.canvas.innerHTML = '';
+      /**
+       * Make the pixi-js-component listen to `iron-resize` if `flexWidth` or `flexHeight` are true.
+       * Disable the event listener otherwise.
+       *
+       * @method _defineAutoStrechBehavior
+       */
+      _defineAutoStrechBehavior: function() {
+        if (this.flexWidth || this.flexHeight)
+          this.listen(this, 'iron-resize', '_resizeCanvas');
+        else
+          this.unlisten(this, 'iron-resize', '_resizeCanvas');
+      },
 
-        this.set( '_sigma', new sigma({
+      /**
+       * Resize the canvas.
+       *
+       * @param {!required} evt {Event} `iron-resize` event.
+       *
+       * @method _resizeCanvas
+       */
+      _resizeCanvas: function(evt) {
+        if (!evt) {
+          this.$.canvas.style.width = this.width;
+          this.$.canvas.style.height = this.height;
+        } else {
+          this.async(function(evt) {
+            // Resize if flex is true.
+            this.$.canvas.style.width = (this.flexWidth) ? evt.target.clientWidth : this.width;
+            this.$.canvas.style.height = (this.flexHeight) ? evt.target.clientHeight : this.height;
+          }.bind(this, evt), 250);
+        }
+      },
+
+      /**
+       * Init the simga-js graph.
+       *
+       * @param {!required} graph {Object} A list of nodes and edges as Sigma-js requires.
+       *
+       * @param {!required} settings {Object} The config option for a sigma-js graph.
+       *
+       * @method setGraph
+       */
+      setGraph: function(graph, settings) {
+        // Empty the canvas
+        this.$.canvas.innerHTML = '';
+        // Ini the sigma-js graph
+        graph = graph || {
+          nodes: [],
+          edges: []
+        };
+        this.set('_sigma', new sigma({
           graph: graph,
           container: this.$.canvas,
           settings: settings || this.settings
-        }) )
-
-        this._sigma.bind('clickNode', this._onNodeClick );
+        }));
+        // Bind click event
+        this._sigma.bind('clickNode', this._onNodeClick);
       },
 
-      addNode: function( node ){
-        this._sigma.graph.addNode( node );
+      /**
+       * Add a node to the graph. Returns the node id.
+       *
+       * @param {!required} node {Object} A node as Sigma-js requires.
+       *
+       * @method addNode
+       */
+      addNode: function(node) {
+        this._sigma.graph.addNode(node);
         return node.id;
       },
 
-      createNode: function( label, color, size ){
-        var nodeId = 'n'+this._sigma.graph.nodes().length;
+      /**
+       * Create and add a node with a label, a color and a size.
+       * Return the node id.
+       *
+       * @param {!required} label {String} The node label.
+       * @param {!required} color {String} The node color (#xxxxxx).
+       * @param {!required} size {Number} The node size.
+       *
+       * @method createNode
+       */
+      createNode: function(label, color, size) {
+        var nodeId = 'n' + this._sigma.graph.nodes().length;
         this.addNode({
           "id": nodeId,
           "label": label,
           "color": color,
           "originalColor": color,
           "size": size,
-          "x": 10 + ( ( this._sigma.graph.nodes().length * 10 ) % 500 ),
-          "y": 10 + Math.floor( this._sigma.graph.nodes().length / 50 ) * 10
+          "x": 10 + ((this._sigma.graph.nodes().length * 10) % 500),
+          "y": 10 + Math.floor(this._sigma.graph.nodes().length / 50) * 10
         });
         return nodeId;
       },
 
-      addEdge: function( edge ){
-        this._sigma.graph.addEdge( edge );
+      /**
+       * Add an edge to the graph. Returns the edge id.
+       *
+       * @param {!required} edge {Object} An edge as Sigma-js requires.
+       *
+       * @method addEdge
+       */
+      addEdge: function(edge) {
+        this._sigma.graph.addEdge(edge);
         return edge.id;
       },
 
-      setEdges: function( edges ){
-        var oldEdges = this._sigma.graph.edges();
-        for(var i in oldEdges){
-          this._sigma.graph.dropEdge( oldEdges[i] );
-        }
-        for( var i in edges ){
-          this._sigma.graph.addEdge( edges[i] );
-        }
-      },
-
-      createEdge: function( source, target ){
-        var edgeId = 'e'+this._sigma.graph.edges().length;
+      /**
+       * Create and add an edge between two nodes. Returns the edge id.
+       *
+       * @param {!required} source {String} The source node id.
+       * @param {!required} target {String} The target node id.
+       *
+       * @method createEdge
+       */
+      createEdge: function(source, target) {
+        var edgeId = 'e' + this._sigma.graph.edges().length;
         this.addEdge({
           source: source,
           target: target,
           id: edgeId
-        })
+        });
         return edgeId;
       },
 
-      _onNodeClick: function(e){
-        this.fire('NODE_CLICKED', {node: e.data.node});
-      },
-
-      resetNodesColor: function( nodes ){
-        var _nodes = null;
-        if( nodes )
-          _nodes = this._sigma.graph.nodes( nodes );
-        else
-          _nodes = this._sigma.graph.nodes();
-        for( var i in _nodes ){
-          _nodes[i].color = _nodes[i].originalColor;
+      /**
+       * Drop the current edges and add new ones.
+       *
+       * @param {!required} edges {Array} A list of edges.
+       *
+       * @method setEdges
+       */
+      setEdges: function(edges) {
+        var oldEdges = this._sigma.graph.edges();
+        for (var i in oldEdges) {
+          this._sigma.graph.dropEdge(oldEdges[i]);
         }
-        this._sigma.refresh();
+        for (var j in edges) {
+          this._sigma.graph.addEdge(edges[j]);
+        }
       },
 
-      deEmphasize: function( nodes ){
-        var _nodes = this._sigma.graph.nodes( nodes );
-        for( var i in _nodes ){
+      /**
+       * Fires `NODE_CLICKED`.
+       *
+       * @param {!required} e {Event} Click event.
+       *
+       * @method _onNodeClick
+       */
+      _onNodeClick: function(e) {
+        this.fire('NODE_CLICKED', {
+          node: e.data.node
+        });
+      },
+
+      /**
+       * Reset some nodes to their original color.
+       *
+       * @param {!required} nodes {Array} The nodes list.
+       *
+       * @method resetNodesColor
+       */
+      resetNodesColor: function(nodes) {
+        if(this._sigma){
+          var _nodes = null;
+          if (nodes)
+            _nodes = this._sigma.graph.nodes(nodes);
+          else
+            _nodes = this._sigma.graph.nodes();
+          for (var i in _nodes) {
+            _nodes[i].color = _nodes[i].originalColor;
+          }
+          this._sigma.refresh();
+
+        }
+      },
+
+      /**
+       * Fade some nodes to gray.
+       *
+       * @param {!required} nodes {Array} The nodes list.
+       *
+       * @method deEmphasize
+       */
+      deEmphasize: function(nodes) {
+        var _nodes = this._sigma.graph.nodes(nodes);
+        for (var i in _nodes) {
           _nodes[i].color = '#555';
         }
         this._sigma.refresh();
       },
 
-      forceAtlas2: function( timeout ){
+      /**
+       * Apply the `forceAtlas2` layout algorithm on the graph.
+       *
+       * @param {!required} timeout {Number} Duration of the algorithm, in ms.
+       *
+       * @method forceAtlas2
+       */
+      forceAtlas2: function(timeout) {
         this._sigma.startForceAtlas2();
         var that = this;
-        var timeout = timeout || 1000;
+        timeout = timeout || 1000;
         setTimeout(
-          function(){ that._sigma.stopForceAtlas2(); },
+          function() {
+            that._sigma.stopForceAtlas2();
+          },
           timeout
         );
 

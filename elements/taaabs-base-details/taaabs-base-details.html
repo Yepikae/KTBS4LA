@@ -11,26 +11,26 @@
         height: 100%;
       }
 
-      table{
+      table {
         width: 100%;
       }
 
-      th{
-        text-align:left;
+      th {
+        text-align: left;
       }
 
-      dt{
+      dt {
         font-weight: bold;
       }
 
-      #modes{
+      #modes {
         display: block;
         width: 100%;
       }
 
-      #visuMode{
+      #visuMode {
         display: block;
-        float:left;
+        float: left;
         width: 100%;
         opacity: 1;
         -webkit-transition: opacity .3s ease-in-out;
@@ -40,10 +40,10 @@
         transition: opacity .3s ease-in-out;
       }
 
-      #editMode{
+      #editMode {
         display: block;
         float: left;
-        width : 100%;
+        width: 100%;
         margin-left: -100%;
         opacity: 0;
         pointer-events: none;
@@ -54,32 +54,31 @@
         transition: opacity .3s ease-in-out;
       }
 
-      .editIcons{
-        float:right;
+      .editIcons {
+        float: right;
         opacity: 0.87;
         cursor: pointer;
       }
 
-      .editIcons:hover{
+      .editIcons:hover {
         opacity: 1;
       }
 
-      .baseLine:hover{
+      .baseLine:hover {
         cursor: pointer;
         background-color: #2e3842;
         color: white;
       }
 
-      :host #bgModal{
+      :host #bgModal {
         position: absolute;
         top: 0px;
         left: 0px;
         width: 100vw;
         height: 100vh;
-        background-color: rgba(0,0,0,0.37);
+        background-color: rgba(0, 0, 0, 0.37);
         opacity: 0;
         pointer-events: none;
-
         -webkit-transition: opacity .3s ease-in-out;
         -moz-transition: opacity .3s ease-in-out;
         -ms-transition: opacity .3s ease-in-out;
@@ -87,7 +86,7 @@
         transition: opacity .3s ease-in-out;
       }
 
-      :host #contentModal{
+      :host #contentModal {
         position: absolute;
         top: 50vh;
         margin-top: -200px;
@@ -97,8 +96,9 @@
         height: 400px;
         padding: 1em;
       }
-
     </style>
+
+    <!-- Modal for Base Creation -->
 
     <div id="bgModal">
       <div id="contentModal" class="bgWhite">
@@ -110,11 +110,14 @@
       </div>
     </div>
 
+    <!-- Title -->
+
     <h3> <span>{{localize('baseInformations')}} : <span>{{_base.id}}</span> </h3>
+
+    <!-- Base Main Information Divs -->
 
     <div id="modes">
       <div id="visuMode">
-
         <iron-icon icon="icons:create" title="{{localize('editIcon')}}" class="editIcons" id="editIcon"></iron-icon>
         <dl>
           <dt> Url </dt>
@@ -124,35 +127,42 @@
           <dt> Description </dt>
           <dd> <span>{{_base.comment}}</span></dd>
         </dl>
-
       </div>
 
       <div id="editMode">
-
         <iron-icon icon="icons:close" class="editIcons fgRed fgRedH" title="{{localize('editCancelIcon')}}" id="editCancelIcon"></iron-icon>
         <iron-icon icon="icons:check" class="editIcons fgGreen fgGreenH" title="{{localize('editSubmitIcon')}}" id="editSubmitIcon"></iron-icon>
         <dl>
           <dt> Url </dt>
           <dd> <a href="{{_base.uri}}" target="_blank"><span>{{_base.uri}}</span></a></dd>
           <dt> Label </dt>
-          <dd> <input type="text" value="{{_baseLabel::input}}"></dd>
+          <dd>
+            <input type="text" value="{{_baseLabel::input}}">
+          </dd>
           <dt> Description </dt>
-          <dd> <textarea value="{{_baseComment::input}}"></textarea></dd>
+          <dd>
+            <textarea value="{{_baseComment::input}}"></textarea>
+          </dd>
         </dl>
       </div>
     </div>
+
+    <!-- Child Base List -->
 
     <iron-icon style="float:right; cursor: pointer;padding-bottom:5px" class="fgDarkBlue fgDarkBlueH" icon="icons:add-circle-outline" on-click="_createBase"></iron-icon>
     <h4 style="margin-bottom: 0px">Bases</h4>
     <table>
       <tr>
-        <th> Id </th><th> Label </th><th> Description </th> <th></th>
+        <th> Id </th>
+        <th> Label </th>
+        <th> Description </th>
+        <th></th>
       </tr>
       <template is="dom-repeat" items="{{_bases}}">
-        <tr class="baseLine">
-          <td on-click="_baseClicked" > <span>{{item.id}}</span> </td>
-          <td on-click="_baseClicked" >  <span>{{item.label}}</span> </td>
-          <td on-click="_baseClicked" > <span>{{item.comment}}</span> </td>
+        <tr on-click="_resourceClicked" class="baseLine">
+          <td> <span>{{item.id}}</span> </td>
+          <td> <span>{{item.label}}</span> </td>
+          <td> <span>{{item.comment}}</span> </td>
           <td style="width:15px">
             <iron-icon on-click='_deleteResource' icon="icons:delete" title="{{localize('delete')}}" class="fgWhite" style="height: 15px;"></iron-icon>
           </td>
@@ -160,57 +170,62 @@
       </template>
     </table>
 
-    <h4> <span>{{localize('storedTraces')}}</span> </h4>
+    <!-- Stored Traces List -->
 
+    <h4> <span>{{localize('storedTraces')}}</span> </h4>
     <table>
       <tr>
-        <th> Id </th><th> Label </th><th> Description </th>
+        <th> Id </th>
+        <th> Label </th>
+        <th> Description </th>
       </tr>
       <template is="dom-repeat" items="{{_storedTraces}}">
-        <tr resid="{{item.uri}}" on-click="_traceClicked" class="baseLine">
+        <tr on-click="_resourceClicked" class="baseLine">
           <td> <span>{{item.id}}</span> </td>
           <td> <span>{{item.label}}</span> </td>
           <td> <span>{{item.comment}}</span> </td>
         </tr>
       </template>
     </table>
+
+    <!-- Computed Traces List -->
 
     <h4> <span>{{localize('computedTraces')}}</span> </h4>
-
-
-
     <table>
       <tr>
-        <th> Id </th><th> Label </th><th> Description </th>
+        <th> Id </th>
+        <th> Label </th>
+        <th> Description </th>
       </tr>
       <template is="dom-repeat" items="{{_computedTraces}}">
-        <tr resid="{{item.id}}" on-click="_tTraceClicked" class="baseLine">
+        <tr on-click="_resourceClicked" class="baseLine">
           <td> <span>{{item.id}}</span> </td>
           <td> <span>{{item.label}}</span> </td>
           <td> <span>{{item.comment}}</span> </td>
         </tr>
       </template>
     </table>
+
+    <!-- Trace Model List -->
 
     <h4> <span>{{localize('traceModels')}}</span> </h4>
-
     <table>
       <tr>
-        <th> Id </th><th> Label </th><th> Description </th>
+        <th> Id </th>
+        <th> Label </th>
+        <th> Description </th>
       </tr>
       <template is="dom-repeat" items="{{_traceModels}}">
-        <tr resid="{{item.id}}" on-click="_modelClicked" class="baseLine">
+        <tr on-click="_resourceClicked" class="baseLine">
           <td> <span>{{item.id}}</span> </td>
           <td> <span>{{item.label}}</span> </td>
           <td> <span>{{item.comment}}</span> </td>
         </tr>
       </template>
     </table>
-
   </template>
 
   <script>
-
     Polymer({
       is: 'taaabs-base-details',
 
@@ -226,31 +241,29 @@
        *    }
        *
        * If mouse_button = 2, then it's a middle-click
-       * @event resourceSelected
+       * @event RESOURCE_SELECTED
        */
-
 
       properties: {
 
         /**
-        * The base URL.
-        *
-        * @attribute baseUrl
-        * @type String
-        */
+         * The base URL.
+         *
+         * @attribute baseUrl
+         * @type String
+         */
         baseUrl: {
           type: String,
           notify: true,
-          value: "",
-		      observer: '_baseURLchanged'
+          value: ""
         },
 
         /**
-        * The base label.
-        *
-        * @attribute _baseLabel
-        * @type String
-        */
+         * The base label.
+         *
+         * @attribute _baseLabel
+         * @type String
+         */
         _baseLabel: {
           type: String,
           notify: true,
@@ -258,11 +271,11 @@
         },
 
         /**
-        * The base notes.
-        *
-        * @attribute _baseNote
-        * @type String
-        */
+         * The base notes.
+         *
+         * @attribute _baseNote
+         * @type String
+         */
         _baseComment: {
           type: String,
           notify: true,
@@ -270,11 +283,11 @@
         },
 
         /**
-        * The base object.
-        *
-        * @attribute _base
-        * @type Object
-        */
+         * The base object.
+         *
+         * @attribute _base
+         * @type Object
+         */
         _base: {
           type: Object,
           notify: true,
@@ -283,75 +296,80 @@
         },
 
         /**
-        * The stored traces of the base.
-        *
-        * @attribute _storedTraces
-        * @type Array
-        */
+         * The stored traces of the base.
+         *
+         * @attribute _storedTraces
+         * @type Array
+         */
         _storedTraces: {
           type: Array,
           notify: true,
-          value: function(){
+          value: function() {
             return [];
           }
         },
 
         /**
-        * The bases of the base.
-        *
-        * @attribute _bases
-        * @type Array
-        */
+         * The bases of the base.
+         *
+         * @attribute _bases
+         * @type Array
+         */
         _bases: {
           type: Array,
           notify: true,
-          value: function(){
+          value: function() {
             return [];
           }
         },
 
-
         /**
-        * The computed traces of the base.
-        *
-        * @attribute _computedTraces
-        * @type Array
-        */
+         * The computed traces of the base.
+         *
+         * @attribute _computedTraces
+         * @type Array
+         */
         _computedTraces: {
           type: Array,
           notify: true,
-          value: function(){
+          value: function() {
             return [];
           }
         },
 
         /**
-        * The models of the base.
-        *
-        * @attribute _traceModels
-        * @type Array
-        */
+         * The models of the base.
+         *
+         * @attribute _traceModels
+         * @type Array
+         */
         _traceModels: {
           type: Array,
           notify: true,
-          value: function(){
+          value: function() {
             return [];
           }
         },
 
         /**
-        * Index of the page of the modal div.
-        * 0 for base creation page, etc.
-        *
-        * @attribute _modalIndex
-        * @type Number
-        */
+         * Index of the page of the modal div.
+         * 0 for base creation page, etc.
+         *
+         * @attribute _modalIndex
+         * @type Number
+         */
         _modalIndex: {
           type: Number,
           notify: true,
           value: 0
         },
 
+        /**
+         * Set to true if the taaabs-base-overview must work with a `taaabs-resource-loader`. False otherwise.
+         *
+         * @attribute taaabsCentralLoading
+         * @type Boolean
+         */
         taaabsCentralLoading: {
           type: Boolean,
           notify: true,
@@ -359,21 +377,20 @@
         },
 
         /**
-        * Localization.
-        * fr, en.
-        *
-        * @attribute language
-        * @type String
-        */
+         * Localization.
+         * fr, en.
+         *
+         * @attribute language
+         * @type String
+         */
         language: {
-            type: String,
-            notify: true,
+          type: String,
+          notify: true,
         },
 
       },
 
-
-      listeners:{
+      listeners: {
         'loadResource': '_loadResource',
         'editIcon.click': '_switchToEditMode',
         'editCancelIcon.click': '_switchToNotEditMode',
@@ -384,111 +401,72 @@
         Polymer.AppLocalizeBehavior
       ],
 
-      ready: function(){
+      ready: function() {},
 
-      },
-
-      attached: function(){
+      attached: function() {
         // Load i18n json.
         this.loadResources(this.resolveUrl('./locales.json'));
+        // Listen for base creation
+        this.$.tbc.addEventListener('BASE_CREATED', function() {
+          this.fire('RESOURCE_CHANGED');
+          this.$.bgModal.style.opacity = 0;
+          this.$.bgModal.style.pointerEvents = "none";
+          window.scrollTo(0, 0);
+        }.bind(this));
+        // Close the modal if base creation is canceled
+        this.$.tbc.addEventListener('CANCEL', function() {
+          this.$.bgModal.style.opacity = 0;
+          this.$.bgModal.style.pointerEvents = "none";
+          window.scrollTo(0, 0);
+        }.bind(this));
+      },
 
-        var that = this;
+      /**
+       * Reset the base and resources arrays. Load every resource of the base.
+       *
+       * @method refresh
+       */
+      refresh: function() {
+        // RESET ALL THE THINGS !!
+        this.set('_base', null);
+        this.set('_bases', []);
+        this.set('_storedTraces', []);
+        this.set('_computedTraces', []);
+        this.set('_traceModels', []);
+        // If we use a resoure-loader, well, we let it load the resources then.
+        if (this.taaabsCentralLoading)
+          this.fire('GET_RESOURCE', {
+            url: this.baseUrl,
+            obj: "_base"
+          });
+        // Otherwise, set _base with a new Samotrace.Base.
+        else
+          this.set('_base', new Samotraces.Ktbs.Base(this.baseUrl));
 
-        this.$.tbc.addEventListener('BASE_CREATED', function(){
-          that.fire('RESOURCE_CHANGED');
-          that.$.bgModal.style.opacity = 0;
-          that.$.bgModal.style.pointerEvents = "none";
-          window.scrollTo(0,0);
+      },
+
+      /**
+       * Triggered when a resource is clicked. Fires `RESOURCE_SELECTED` with the resource object.
+       *
+       * @param {!required} e (Event) The click event.
+       *
+       * @method _resourceClicked
+       */
+      _resourceClicked: function(e) {
+        var res = e.model.item;
+        res.uri = this._base.getAbsoluteURLFromRelative(this._base.uri, res.id);
+        this.fire('RESOURCE_SELECTED', {
+          "resource": res,
+          "which": e.which
         });
-        this.$.tbc.addEventListener('CANCEL', function(){
-          that.$.bgModal.style.opacity = 0;
-          that.$.bgModal.style.pointerEvents = "none";
-          window.scrollTo(0,0);
-        });
-
-
       },
 
       /**
-      * Triggered when a base is clicked.
-      * Fires `resourceSelected`.
-      *
-      * @param {!required} e The click event
-      *
-      * @method _baseClicked
-      */
-      _baseClicked: function(e){
-        var obj = {
-          "resourceURL": this._base.uri + e.model.item.id,
-          "resourceType": "Base",
-          "which":e.which
-        }
-        this.fire('resourceSelected', obj)
-      },
-
-      /**
-      * Triggered when a computed trace is clicked.
-      * Fires `resourceSelected`.
-      *
-      * @param {!required} e The click event
-      *
-      * @method _tTraceClicked
-      */
-      _tTraceClicked: function(e){
-        var tr = e.target;
-        while(tr.localName !== 'tr')
-          tr = tr.parentNode;
-        var obj = {
-          "resourceURL": tr.resid,
-          "resourceType": "ComputedTrace",
-          "which":e.which
-        }
-        this.fire('resourceSelected', obj)
-      },
-
-      /**
-      * Triggered when a trace model is clicked.
-      * Fires `resourceSelected`.
-      *
-      * @param {!required} e The click event
-      *
-      * @method _modelClicked
-      */
-      _modelClicked: function(e){
-        var tr = e.target;
-        while(tr.localName !== 'tr')
-          tr = tr.parentNode;
-        var obj = {
-          "resourceURL": tr.resid,
-          "resourceType": "TraceModel",
-          "which":e.which
-        }
-        this.fire('resourceSelected', obj)
-      },
-
-      /**
-      * Triggered when a stored trace is clicked.
-      * Fires `resourceSelected`.
-      *
-      * @param {!required} e The click event
-      *
-      * @method _traceClicked
-      */
-      _traceClicked: function(e){
-        var obj = {
-          "resourceURL": this._base.uri + e.model.item.id,
-          "resourceType": "StoredTrace",
-          "which":e.which
-        }
-        this.fire('resourceSelected', obj)
-      },
-
-      /**
-      * Change some css to display the edit panel
-      *
-      * @method _switchToEditMode
-      */
-      _switchToEditMode: function(){
+       * Change some css to display the edit panel
+       *
+       * @method _switchToEditMode
+       */
+      _switchToEditMode: function() {
         this.$.visuMode.style.opacity = 0;
         this.$.visuMode.style.pointerEvents = 'none';
         this.$.editMode.style.opacity = 1;
@@ -496,11 +474,11 @@
       },
 
       /**
-      * Change some css to hide the edit panel
-      *
-      * @method _switchToNotEditMode
-      */
-      _switchToNotEditMode: function(){
+       * Change some css to hide the edit panel
+       *
+       * @method _switchToNotEditMode
+       */
+      _switchToNotEditMode: function() {
         this.$.visuMode.style.opacity = 1;
         this.$.visuMode.style.pointerEvents = 'auto';
         this.$.editMode.style.opacity = 0;
@@ -508,120 +486,106 @@
       },
 
       /**
-      * PUT the new base params (label and notes).
-      *
-      * @method _submitBaseChanges
-      */
-      _submitBaseChanges: function(){
-
-        var that = this;
-
+       * PUT the new base params (label and notes).
+       *
+       * @method _submitBaseChanges
+       */
+      _submitBaseChanges: function() {
+        // Init the new attributes to PUT in the base.
         var obj = [
           ["label", this._baseLabel],
-          ["http://www.w3.org/2000/01/rdf-schema#comment", [this._baseComment] ]
+          ["http://www.w3.org/2000/01/rdf-schema#comment", [this._baseComment]]
         ];
-
-        this._base.modify_attributes( obj ).then( function(response){
-
-            that.set('_base.label', that._base['label']);
-            that.set('_baseLabel', that._base['label']);
-
-            that.set('_base.comment', that._base['comment']);
-            that.set('_baseComment', that._base['comment']);
-
-            that._switchToNotEditMode();
-
-          })
-          .catch( function(err){
+        // Set the new attributes of the base
+        this._base.modify_attributes(obj).then(function(response) {
+            this.set('_base.label', that._base.label);
+            this.set('_baseLabel', that._base.label);
+            this.set('_base.comment', that._base.comment);
+            this.set('_baseComment', that._base.comment);
+            this._switchToNotEditMode();
+          }.bind(this))
+          .catch(function(err) {
             console.log(err);
           });
       },
 
       /**
-      * Triggered when `baseUrl` changes.
-      *
-      * @method _baseURLchanged
-      */
-      _baseURLchanged: function(){
-        this.set('_storedTraces',[]);
-        this.set('_computedTraces',[]);
-        this.set('_traceModels',[]);
-        var that = this;
-      },
-
-      _baseChanged: function(){
-        if( this._base ){
-          var that = this;
-          this._base.load_properties(['label','comment'])
-            .then( function(resources){
-              that._setResources(resources);
-            })
-            .catch( function(err){
+       * Triggered when `_base` changes. Load its child resources.
+       *
+       * @method _baseChanged
+       */
+      _baseChanged: function() {
+        if (this._base) {
+          this._base.load_properties(['label', 'comment'])
+            .then(function(resources) {
+              this._setResources(resources);
+            }.bind(this))
+            .catch(function(err) {
               console.log(err);
-            })
-          }
+            });
+        }
       },
 
-      _setResources: function(resources){
-        for(var i in resources){
-          resources[i]['id'] = resources[i]['@id'];
+      /**
+       * Format the raw resources of the base for display purpose. Push the resources into its respective list.
+       *
+       * @param {!required} resources (Array) The child resources of `_base`.
+       *
+       * @method _setResources
+       */
+      _setResources: function(resources) {
+        for (var i in resources) {
+          resources[i].id = resources[i]['@id'];
           //TODO Replace Array position by real String.
-          if( resources[i]['rdf:comments'] )
-            resources[i]['comment'] = resources[i]['rdf:comments'][0];
-
-          switch(resources[i]['@type']){
+          if (resources[i]['rdf:comments'])
+            resources[i].comment = resources[i]['rdf:comments'][0];
+          switch (resources[i]['@type']) {
             case 'Base':
               this.push('_bases', resources[i]);
-            break;
+              break;
             case 'StoredTrace':
               this.push('_storedTraces', resources[i]);
-            break;
+              break;
             case 'ComputedTrace':
               this.push('_computedTraces', resources[i]);
-            break;
+              break;
             case 'TraceModel':
               this.push('_traceModels', resources[i]);
-            break;
+              break;
           }
         }
       },
 
       /**
-      * Load every resource of the base.
-      *
-      * @method refresh
-      */
-      refresh: function(){
-        this.set('_base', null);
-        this.set('_bases', []);
-        this.set('_storedTraces', []);
-        this.set('_computedTraces', []);
-        this.set('_traceModels', []);
-        if( this.taaabsCentralLoading )
-          this.fire('GET_RESOURCE', {url:this.baseUrl, obj:"_base"});
-        //TODO Complete with no taaabsCentralLoading option.
-      },
-
-      _deleteResource: function(e){
-        if (window.confirm(this.localize('deleteConfirm') + " " + e.model.item['@id'] + " ?" )) {
-          var that = this;
-          var res = new Samotraces.Ktbs.Resource( this._base.uri + e.model.item['@id']  );
-          console.log(res);
+       * Triggered when a "delete resource" button is clicked.
+       *
+       * @param {!required} e (Event) The click event.
+       *
+       * @method _deleteResource
+       */
+      _deleteResource: function(e) {
+        if (window.confirm(this.localize('deleteConfirm') + " " + e.model.item['@id'] + " ?")) {
+          var res = new Samotraces.Ktbs.Resource(this._base.uri + e.model.item['@id']);
           res.remove()
-            .then( function(msg){
-              console.log( msg );
-              that.fire('RESOURCE_CHANGED');
-            })
-            .catch( function(err){
+            .then(function(msg) {
+              this.fire('RESOURCE_CHANGED');
+            }.bind(this))
+            .catch(function(err) {
               console.log(err);
-            })
+            });
         }
       },
 
-      _createBase: function(){
+      /**
+       * Triggered when the "create base" button is clicked.
+       * Show the modal.
+       *
+       * @method _createBase
+       */
+      _createBase: function() {
         this.$.bgModal.style.opacity = 1;
         this.$.bgModal.style.pointerEvents = "auto";
-        window.scrollTo(0,0);
+        window.scrollTo(0, 0);
       },
 
     });

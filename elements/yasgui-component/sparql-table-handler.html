@@ -1,0 +1,117 @@
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+
+<dom-module id="sparql-table-handler">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <table>
+      <thead>
+        <tr>
+          <template is="dom-repeat" items="[[_respVars]]">
+            <th> [[item]] </th>
+          </template>
+        </tr>
+      </thead>
+      <tbody>
+        <template is="dom-repeat" items="[[_displayedValues]]">
+          <tr>
+            <template is="dom-repeat" items="[[item]]">
+              <td> [[item]] </td>
+            </template>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </template>
+  <script>
+    Polymer({
+      is: 'sparql-table-handler',
+
+      properties: {
+
+        /**
+         * List of the sparql response vars.
+         *
+         * @attribute _respVars
+         * @type Array
+         */
+        _respVars: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        /**
+         * List of the sparql response values.
+         *
+         * @attribute _respValues
+         * @type Array
+         */
+        _respValues: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        /**
+         * List of the sparql response values displayed.
+         *
+         * @attribute _displayedValues
+         * @type Array
+         */
+        _displayedValues: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+      },
+
+      /**
+       * Transform a sparql response (String) to a table.
+       * Set `_respVars` & `_respValues`.
+       *
+       * @param {!required} response {String} The sparql response.
+       *
+       * @method format
+       */
+      format: function(response) {
+
+        this.set('_respVars', []);
+        this.set('_respValues', []);
+        this.set('_displayedValues', []);
+
+        var _response = JSON.parse( response );
+        for(var i = 0; i < _response.head.vars.length; i++){
+          this.push('_respVars', _response.head.vars[i]);
+        }
+
+        var _respValues = [];
+
+        for( i = 0 ; i < _response.results.bindings.length; i++ ){
+
+          _respValues.push( [] );
+
+          for( var j = 0 ; j < this._respVars.length; j++ )
+            _respValues[i].push( null );
+
+          for( j in _response.results.bindings[i] ){
+            _respValues[i][this._respVars.indexOf(j)] = _response.results.bindings[i][j].value ;
+          }
+        }
+
+        this.set('_respValues', _respValues);
+
+        for( var i = 0 ; i < this._respValues.length && i < 10; i++){
+          this.push('_displayedValues', this._respValues[i]);
+        }
+
+        console.log( this._respValues );
+      }
+    });
+  </script>
+</dom-module>

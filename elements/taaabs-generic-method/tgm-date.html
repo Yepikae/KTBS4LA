@@ -1,0 +1,146 @@
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<dom-module id="tgm-date">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      :host .dateInput {
+        width: 60px;
+        text-align: right;
+        outline: 0;
+        box-shadow: none;
+        border: none;
+        border-bottom: solid 1px grey;
+      }
+    </style>
+
+    <p>
+      [[comment]]
+    </p>
+
+    <input class="dateInput" on-change="_onDateChange" id="dayInput" type="Number" min="1" max="31" placeholder="day"></input>/
+    <input class="dateInput" on-change="_onDateChange" id="monthInput" type="Number" min="1" max="12" placeholder="month"></input>/
+    <input class="dateInput" on-change="_onDateChange" id="yearInput" type="Number" min="1970" max="2100" placeholder="year"></input>
+
+    --
+
+    <input class="dateInput" on-change="_onDateChange" id="hourInput" type="Number" min="0" max="23" placeholder="hr"></input>:
+    <input class="dateInput" on-change="_onDateChange" id="minuteInput" type="Number" min="0" max="59" placeholder="min"></input>'
+    <input class="dateInput" on-change="_onDateChange" id="secondInput" type="Number" min="0" max="59" placeholder="sec"></input>''
+    <input class="dateInput" on-change="_onDateChange" id="millisecondInput" type="Number" min="0" max="100" placeholder="ms"></input>ms
+
+    <iron-icon icon="icons:clear" on-click="_onClearClick"></iron-icon>
+
+  </template>
+  <script>
+    var tgmDate = Polymer({
+      is: 'tgm-date',
+
+      properties: {
+
+        /**
+         * Either 'timestamp' or 'datetime'.
+         *
+         * @attribute exportFormat
+         * @type String
+         */
+        exportFormat: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * The comment of the paramater.
+         *
+         * @attribute comment
+         * @type String
+         */
+        comment: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+
+        /**
+         * The chosen value.
+         *
+         * @attribute value
+         * @type String
+         */
+        value: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+      },
+
+      /**
+       * Returns the parameter name.
+       *
+       * @method getParameterName
+       */
+      getParameterName: function() {
+        return this.name;
+      },
+
+      /**
+       * Returns the parameter value.
+       *
+       * @method getParameterValue
+       */
+      getParameterValue: function() {
+        return this.value;
+      },
+
+      /**
+       * Set the different dates.
+       *
+       * @param {!required} dateValue {String} The date value (either timestamp or DT).
+       *
+       * @method setValue
+       */
+      setValue: function(dateValue) {
+        this.set('value', dateValue);
+        var date = new Date( dateValue );
+
+        console.log( dateValue );
+
+        this.$.dayInput.value = date.getDate();
+        this.$.monthInput.value = date.getMonth() + 1;
+        this.$.yearInput.value = date.getFullYear();
+        this.$.hourInput.value = date.getHours();
+        this.$.minuteInput.value = date.getMinutes();
+        this.$.secondInput.value = date.getSeconds();
+        this.$.millisecondInput.value = date.getMilliseconds();
+      },
+
+      /**
+       * Format the selected date.
+       *
+       * @method _onDateChange
+       */
+      _onDateChange: function() {
+        var date = new Date(this.$.yearInput.value, this.$.monthInput.value - 1, this.$.dayInput.value, this.$.hourInput.value, this.$.minuteInput.value, this.$.secondInput.value, this.$.millisecondInput.value);
+        if (this.exportFormat === "xsd:dateTime") {
+          this.set('value', date.toISOString());
+        } else {
+          this.set('value', date.getTime().toString());
+        }
+      },
+
+      /**
+       * Clear the values.
+       *
+       * @method _onClearClick
+       */
+      _onClearClick: function() {
+        this.$.yearInput.value = this.$.monthInput.value = this.$.dayInput.value = this.$.hourInput.value = this.$.minuteInput.value = this.$.secondInput.value = this.$.millisecondInput.value = null;
+        this.set('value', null);
+      }
+    });
+  </script>
+</dom-module>

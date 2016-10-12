@@ -1,0 +1,166 @@
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<dom-module id="tgm-select-or-uri">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      :host #select {
+        transition: opacity 0.25s ease-in-out;
+      }
+
+      :host #inputDiv {
+        display: block;
+        width: 100%
+      }
+
+      :host .inactive {
+        opacity: 0.37;
+        pointer-events: none;
+        transition: opacity 0.25s ease-in-out;
+      }
+
+      :host .inactive iron-icon {
+        opacity: 0.37;
+        pointer-events: none;
+        transition: opacity 0.25s ease-in-out;
+      }
+    </style>
+
+    <p>
+      [[comment]]
+    </p>
+    <select id="select" on-change='_onSelectChange'>
+      <option disabled selected value> -- select a model -- </option>
+      <template is="dom-repeat" items="[[list]]">
+        <option value="[[item]]">[[item]]</option>
+      </template>
+    </select>
+    <iron-icon icon="icons:clear" on-click="_onClearClick"></iron-icon>
+    <div id="inputDiv">
+      <input id="inputValueCheck" type="checkbox" on-click="_onCheckClick">custom uri</input>
+      <input id='inputValue' class="inputWithIcon inactive" style="outline:0" value="{{value::input}}">
+      <iron-icon id="inputValueIcon" class="inputWithIconIcon fgDarkBlue inactive" icon="icons:create"></iron-icon>
+      </input>
+    </div>
+
+  </template>
+  <script>
+    var tgmSelectOrUri = Polymer({
+      is: 'tgm-select-or-uri',
+
+      properties: {
+
+        /**
+         * The parameter name.
+         *
+         * @attribute name
+         * @type String
+         */
+        name: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * The comment of the paramater.
+         *
+         * @attribute comment
+         * @type String
+         */
+        comment: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+
+        /**
+         * List of options.
+         *
+         * @attribute list
+         * @type Array
+         */
+        list: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        /**
+         * The chosen value.
+         *
+         * @attribute value
+         * @type String
+         */
+        value: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+      },
+
+      /**
+       * Returns the parameter name.
+       *
+       * @method getParameterName
+       */
+      getParameterName: function() {
+        return this.name;
+      },
+
+      /**
+       * Returns the parameter value.
+       *
+       * @method getParameterValue
+       */
+      getParameterValue: function() {
+        return this.value;
+      },
+
+      /**
+       * Set the value according to the last selected value.
+       *
+       * @method _onSelectChange
+       */
+      _onSelectChange: function() {
+        this.set('value', this.$.select.value);
+      },
+
+      /**
+       * change the input value css
+       *
+       * @method _onCheckClick
+       */
+      _onCheckClick: function() {
+
+        if (this.$.inputValueCheck.checked) {
+          this.$.inputValue.classList.remove('inactive');
+          this.$.inputValueIcon.classList.remove('inactive');
+          this.$.select.classList.add('inactive');
+        } else {
+          this.$.inputValue.classList.add('inactive');
+          this.$.inputValueIcon.classList.add('inactive');
+          this.$.select.classList.remove('inactive');
+
+          this.set('value', this.$.select.value);
+        }
+
+      },
+
+      /**
+       * Clear the values.
+       *
+       * @method _onClearClick
+       */
+      _onClearClick: function() {
+        this.$.select.value = null;
+        this.$.select.options[0].selected = true;
+        this.set('value', null);
+      }
+    });
+  </script>
+</dom-module>

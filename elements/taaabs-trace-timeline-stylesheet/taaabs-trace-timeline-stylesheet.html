@@ -1,19 +1,108 @@
+<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
 <dom-module id="taaabs-trace-timeline-stylesheet">
 
   <template>
 
     <style>
-      :host #textEditor {
-        width: 400px;
-        height: 600px;
-        font-family: monospace;
-      }
+
     </style>
 
+    <div style="height: 40px; width : 100%">
+      <iron-icon icon="icons:add" on-click="_onAddClick"></iron-icon>
+      <iron-icon icon="icons:file-download" on-click="_onDownloadClick"></iron-icon>
+      <iron-icon icon="icons:file-upload" on-click="_onUploadClick"></iron-icon>
+    </div>
+    <iron-collapse id="styleList">
+      <div class="content">
+        <template is="dom-repeat" items="[[_stylesheets]]">
+          <div style="padding: 5px; cursor: pointer; border: solid 1px gray;" on-click="_onStyleListClick">
+            <h4>[[item.name]]</h4>
+            <p>[[item.description]]</p>
+          </div>
+        </template>
+      </div>
+    </iron-collapse>
+    <div style="text-align: center; width: 100%; padding: 5px; border: solid 1px gray">
+      [[styleTemplate.name]]
+    </div>
+    <div style="text-align: justify; width: 100%; padding: 3px">
+      [[styleTemplate.description]]
+    </div>
+    <template is="dom-repeat" id="stylesListRepeat" items="{{styleTemplate.rules}}">
+      <div class="ttsRule" style="display: table; table-layout: fixed; width : 100%;">
 
-    <textarea id="textEditor" value="{{styleSheet}}"></textarea>
+        <!-- ////// -->
+        <!-- SYMBOL -->
+        <!-- ////// -->
 
-    <div class="button" on-click="_applyStyle"> APPLY </div>
+
+        <div style="display: table-cell; width: 60px; position: relative">
+          <div style=" display: block; position: absolute; margin-top: -12px; margin-left: -12px; left: 50%; top: 50%; width: 36px; height: 36px">
+            <iron-icon class="icon fgDarkBlue fgDarkBlueH" icon="[[_getVisibility(item.enabled)]]" title="[[localize(_getVisibility(rule.enabled))]]" on-click="_onVisibilityClicked">
+            </iron-icon>
+          </div>
+        </div>
+
+        <div style="display: table-cell; width: 60px; position: relative">
+          <div style=" display: block; position: absolute; margin-top: -18px; margin-left: -18px; left: 50%; top: 50%; width: 36px; height: 36px">
+            <iron-icon icon="timeline-symbols:{{item.symbol.shape}}" style$="color: {{item.symbol.color}}; width: 36px; height: 36px"></iron-icon>
+          </div>
+
+        </div>
+
+        <!-- ///// -->
+        <!-- RULES -->
+        <!-- ///// -->
+
+        <div style="display: table-cell; width: 100%">
+
+          <div>
+            <b><span>{{item.typeObsel.name}}</span></b>
+          </div>
+
+          <template is="dom-repeat" items="{{item.attributes}}">
+            <div>
+              <span>{{item.name}}</span>
+              <span>{{item.operator}}</span>
+              <span>{{item.val}}</span>
+            </div>
+          </template>
+
+        </div>
+
+        <!-- /////// -->
+        <!-- OPTIONS -->
+        <!-- /////// -->
+
+        <div style="display: table-cell; width: 40px">
+
+          <div>
+            <iron-icon class="icon fgRed fgRedH" icon="icons:clear" title="[[localize('delete')]]" on-click="_onDeleteClicked"></iron-icon>
+          </div>
+          <div>
+            <iron-icon class="icon fgDarkBlue fgDarkBlueH" icon="icons:settings" title="[[localize('settings')]]" on-click="_onSettingsClicked"></iron-icon>
+          </div>
+          <div>
+            <iron-icon class="icon fgDarkBlue fgDarkBlueH" icon="icons:content-copy" on-click="_onDuplicateClicked">
+            </iron-icon>
+          </div>
+
+        </div>
+
+      </div>
+    </template>
+
+    <paper-dialog id="uploadStyleModal">
+      <h2>Save your stylesheet</h2>
+      <input placeholder="name" class="inputWithIcon" style="outline:0" value="{{_styleName::input}}">
+      </input>
+      <input placeholder="description" class="inputWithIcon" style="outline:0" value="{{_styleDescription::input}}">
+      </input>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button dialog-confirm autofocus on-click="_onUploadStylesheet">Accept</paper-button>
+      </div>
+    </paper-dialog>
 
   </template>
 
@@ -23,19 +112,37 @@
       is: 'taaabs-trace-timeline-stylesheet',
       properties: {
 
-        /**
-         * List of the `styleSheet` rules.
-         *
-         * @attribute rules
-         * @type Array
-         */
-        rules: {
-          type: Array,
+        styleTemplate: {
+          type: Object,
           notify: true,
           value: null
         },
 
-        styleSheet: {
+        model: {
+          type: Object,
+          notify: true,
+          value: null
+        },
+
+        _stylesheets: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        _stylesheetsModified: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        _styleName: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+
+        _styleDescription: {
           type: String,
           notify: true,
           value: ""
@@ -55,56 +162,150 @@
 
       },
 
-      observers: [
-        '_onRulesChanged(rules.*)',
-      ],
+      observers: [],
 
-        ready: function() {
+      ready: function() {},
 
+      attached: function() {},
+
+      addRule: function(rule) {
+        this.push('styleTemplate.obj.rules', rule);
       },
 
-      attached: function() {
-        this.set('styleSheet', "#DEFAULT_GLOBAL_SYMBOL {\n  color: #21b2a6,\n  shape: DIAMOND\n}");
+      createRandomStyle: function() {
+
+        var rules = [];
+
+        function get_random_symbol() {
+          var color = '#' + Math.floor(Math.random() * 16777215).toString(16);
+          /* TODO See if random shape is better than simple circle
+          var shape = ['DIAMOND', 'CIRCLE', 'SQUARE', 'STAR'][Math.floor(Math.random() * 4)];*/
+          var shape = 'CIRCLE';
+          return {
+            color: color,
+            shape: shape
+          };
+        }
+
+        for (var i = 0; i < this.model.list_type_obsels.length; i++) {
+          var rule = {
+            typeObsel: {
+              name: this.model.list_type_obsels[i]['@id'].replace('#', 'm:')
+            },
+            enabled: true,
+            attributes: [],
+            symbol: get_random_symbol()
+          };
+          rules.push(rule);
+        }
+
+        this.set('styleTemplate', {
+          name: 'Symbol for type',
+          description: 'This is the default stylesheet.',
+          rules: rules
+        });
       },
 
-      _applyStyle: function() {
-        this.styleSheet = this.$.textEditor.value;
+      loadStylesheetsFromModel: function() {
+        if (this.model.model_properties['http://taaabs-hubble/onto#timeline-stylesheet']) {
+          this.set('_stylesheets', JSON.parse(this.model.model_properties['http://taaabs-hubble/onto#timeline-stylesheet']));
+        }
+      },
+
+      forceRefresh: function() {
+        this.$.stylesListRepeat.set('items', []);
+        this.async(function() {
+          this.$.stylesListRepeat.set('items', this.styleTemplate.rules);
+        },50);
       },
 
       /**
-       * Triggered when `rules` changes.
+       * Returns the `iron-icon` value according to the enabled status of the rule.
        *
-       * @method _onRulesChanged
+       * @param {!required} enabled {String} Enabled status of the rule.
+       *
+       * @method _getVisibility
        */
-      _onRulesChanged: function() {
+      _getVisibility: function(enabled) {
+        return (enabled) ? 'icons:visibility' : 'icons:visibility-off';
+      },
 
-        var styleSheet = "";
-        for (var i = 0; i < this.rules.length; i++) {
-          var rule = this.rules[i];
-          var new_rule = "\n\n";
-          if (rule.typeObsel) {
-            new_rule += "#" + rule.typeObsel.name+' ';
-          }
-          if( rule.attributes.length > 0 ){
-            new_rule += '.' + rule.attributes[0].name + '["';
-            if (rule.attributes[0].operator)
-              new_rule += rule.attributes[0].operator + '","';
-            new_rule += rule.attributes[0].val + '"]';
-          }
-          for (var j = 1; j <  rule.attributes.length; j++) {
-            new_rule += '.' + rule.attributes[j].name + '["';
-            if (rule.attributes[j].operator)
-              new_rule += rule.attributes[j].operator + '","';
-            new_rule += rule.attributes[j].val + '"]';
-          }
-          new_rule += "{\n";
-          new_rule += "  color: " + rule.symbol.color + ',\n';
-          new_rule += "  shape: " + rule.symbol.shape + ',\n';
-          new_rule += "  enabled: " + rule.enabled.toString() + '\n}';
+      /**
+       * Triggered on the `visibility` icon is clicked.
+       * Toggle the `rule` enabled attribute.
+       *
+       * @method _onVisibilityClicked
+       */
+      _onVisibilityClicked: function(e) {
+        this.set('styleTemplate.rules.#' + e.model.index + '.enabled', !e.model.item.enabled);
+        this.fire('template_changed');
+      },
 
-          styleSheet += new_rule;
+      /**
+       *
+       *
+       * @param {!required} e {String} Event from click.
+       *
+       * @method _onSettingsClicked
+       */
+      _onSettingsClicked: function(e) {
+        this.fire('edit_rule', {
+          rule: this.styleTemplate.rules[e.model.index]
+        });
+      },
+
+      /**
+       *
+       *
+       * @param {!required} e {String} Event from click.
+       *
+       * @method _onDeleteClicked
+       */
+      _onDeleteClicked: function(e) {
+        this.splice('styleTemplate.rules', e.model.index, 1);
+        this.fire('template_changed');
+      },
+
+      _onDownloadClick: function() {
+        this.$.styleList.toggle();
+      },
+
+      _onStyleListClick: function(evt) {
+        this.set('styleTemplate', evt.model.item);
+        this.fire('template_changed');
+      },
+
+      _onUploadClick: function() {
+        this.$.uploadStyleModal.toggle();
+      },
+
+      _onUploadStylesheet: function() {
+        // Retrieve all the stylesheets
+        var _stylesheets = [];
+        for (var i = 0; i < this._stylesheets.length; i++) {
+          _stylesheets.push(this._stylesheets[i]);
         }
-        this.set('styleSheet', styleSheet);
+        this.styleTemplate.name = this._styleName;
+        this.styleTemplate.description = this._styleDescription;
+        _stylesheets.push(this.styleTemplate);
+
+        console.log(_stylesheets);
+
+        var _graph = this.model.graph;
+        for (i = 0; i < _graph.length; i++) {
+          if (_graph[i]['@type'] === 'TraceModel') {
+            _graph[i]['http://taaabs-hubble/onto#timeline-stylesheet'] = JSON.stringify(_stylesheets);
+          }
+        }
+
+        var that = this;
+        this.model.put_model(_graph)
+          .then(function() {
+            console.log(' _model updated ');
+          })
+          .catch(function(err) {
+            console.log(err);
+          });
       }
 
     });

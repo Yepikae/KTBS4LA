@@ -1,0 +1,198 @@
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<dom-module id="tgm-simple-select">
+  <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      .flex {
+        @apply(--layout-horizontal);
+      }
+    </style>
+
+    <p>
+      [[comment]]
+    </p>
+
+    <div id="itemList" class="flex">
+      <template is="dom-repeat" items="[[list]]">
+        <input class="input" type="checkbox" value="[[item.value]]" on-click="_onCheckClick" checked="[[_getCheckedStatus(item)]]">[[item.display]]</input>
+      </template>
+    </div>
+    <iron-icon icon="icons:clear" on-click="_onClearClick"></iron-icon>
+
+  </template>
+  <script>
+    var tgmSimpleSelect = Polymer({
+      is: 'tgm-simple-select',
+
+      properties: {
+
+        /**
+         * The parameter name.
+         *
+         * @attribute name
+         * @type String
+         */
+        name: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+        /**
+         * The comment of the paramater.
+         *
+         * @attribute comment
+         * @type String
+         */
+        comment: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+
+        /**
+         * List of options.
+         *
+         * @attribute list
+         * @type Array
+         */
+        list: {
+          type: Array,
+          notify: true,
+          value: []
+        },
+
+        /**
+         * True if the pramaeter can have multiple values. False otherwise.
+         *
+         * @attribute multiple
+         * @type Boolean
+         */
+        multiple: {
+          type: Boolean,
+          notify: true,
+          value: false
+        },
+
+        /**
+         * The chosen value.
+         *
+         * @attribute value
+         * @type String
+         */
+        value: {
+          type: String,
+          notify: true,
+          value: null
+        },
+
+        _checkedElem: {
+          type: Array,
+          value: []
+        }
+
+      },
+
+      /**
+       * Returns the parameter name.
+       *
+       * @method getParameterName
+       */
+      getParameterName: function() {
+        return this.name;
+      },
+
+      /**
+       * Returns the parameter value.
+       *
+       * @method getParameterValue
+       */
+      getParameterValue: function() {
+        return this.value;
+      },
+
+      /**
+       * Set the selected values.
+       *
+       * @param {!required} selected {String} The space-separated values.
+       *
+       * @method setValue
+       */
+      setValue: function(selected) {
+        this.set('value', selected);
+        var elems = this.querySelectorAll('.input');
+        for(var i = 0 ; i < elems.length; i++){
+          if( this.value.indexOf(elems[i].value) > -1 ){
+            elmes[i].checked = true;
+          }
+        }
+      },
+
+      /**
+       * Set the multiple attribute of the seletc.
+       *
+       * @param {!required} isMultiValued {String} True if the select can have multiple values, false otherwise.
+       *
+       * @method setMultiValued
+       */
+      setMultiValued: function(isMultiValued) {
+        this.$.select.multiple = isMultiValued;
+      },
+
+      _getCheckedStatus: function(item){
+        return this.value.indexOf(item.value) > -1;
+      },
+
+      /**
+       * Set the value according to the last selected value.
+       *
+       * @method _onSelectChange
+       */
+      _onCheckClick: function(evt) {
+        var elem = evt.target;
+        if( this.multiple ){
+          if(elem.checked) this.push('_checkedElem', elem);
+          else{
+            for(var i = 0 ; i < this._checkedElem.length; i++){
+              if(this._checkedElem[i].value === elem.value){
+                this.splice('_checkedElem', i, 1);
+                break;
+              }
+            }
+          }
+        }
+        else{
+          if(elem.checked){
+            this.pop('_checkedElem');
+            this.push('_checkedElem', elem);
+          }
+          else{
+            this.pop('_checkedElem');
+          }
+        }
+        var val = '';
+        for(var i = 0 ; i < this._checkedElem.length; i++){
+          val += this._checkedElem[i].value;
+          if( i < this._checkedElem.length - 1)
+            val += ' ';
+        }
+        this.set('value', val);
+      },
+
+      /**
+       * Clear the values.
+       *
+       * @method _onClearClick
+       */
+      _onClearClick: function() {
+        this.$.select.value = null;
+        this.$.select.options[0].selected = true;
+        this.set('value', null);
+      }
+    });
+  </script>
+</dom-module>

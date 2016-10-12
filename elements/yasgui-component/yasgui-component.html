@@ -1,14 +1,58 @@
 <link rel="import" href="../../bower_components/google-chart/google-chart.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+
+<link rel="import" href="sparql-table-handler.html">
+<link rel="import" href="sparql-obsel-timeline-handler.html">
+<link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+
 <dom-module id="yasgui-component">
   <template>
+    <style include="taaabs-dark-theme"></style>
+    <style>
+      .flex-horizontal {
+        @apply(--layout-horizontal);
+      }
 
-    <google-chart id="chart"
-  type='bar'
-  options='{"title": "Distribution of days in 2001Q1"}'>
-</google-chart>
+      .flexchild {
+        @apply(--layout-flex);
+      }
+
+      :host .activePanel {
+        background-color: #35ccbf;
+      }
+
+      :host .button {
+        width: 100%;
+        text-align: center;
+      }
+    </style>
 
 
-  <!--  <div id="showcase"></div> -->
+    <div class="container flex-horizontal">
+      <div class="flexchild">
+        <div class="button activePanel" on-click="_onRawDatasClicked">Raw datas</div>
+      </div>
+      <div class="flexchild" on-click="_onTimelineClicked">
+        <div class="button">Timeline</div>
+      </div>
+      <div class="flexchild" on-click="_onGoogleChartClicked">
+        <div class="button">Google chart</div>
+      </div>
+    </div>
+
+
+    <iron-pages selected="{{_visuIndex}}">
+      <div>
+        <sparql-table-handler id="sparqlTableHandler"></sparql-table-handler>
+      </div>
+      <div>
+        <sparql-obsel-timeline-handler id="sparqlObselTimelineHandler"></sparql-obsel-timeline-handler>
+      </div>
+      <div>
+
+      </div>
+    </iron-pages>
+    <!--  <div id="showcase"></div> -->
   </template>
 
   <script>
@@ -20,7 +64,7 @@
         endPoint: {
           type: String,
           notify: true,
-          value :"",
+          value: "",
           observer: "_endPointChanged"
         },
 
@@ -42,30 +86,51 @@
           value: ""
         },
 
-        _datas: {
-          type: Array,
+        _spareQuery: {
+          type: String,
           notify: true,
-          value: [["Categories", "Value"],
- ["Category 1", 1.0],
- ["Category 2", 1.1]]
-        }
+          value: ""
+        },
 
+        /**
+         * Index of the displayed visualization.
+         *
+         * @attribute _visuIndex
+         * @type Number
+         */
+        _visuIndex: {
+          type: Number,
+          notify: true,
+          value: 0
+        },
+
+        /**
+         * The last response received from a sparql query.
+         *
+         * @attribute _lastResponse
+         * @type String
+         */
+        _lastResponse: {
+          type: String,
+          notify: true,
+          value: null
+        },
 
       },
 
       ready: function() {
-        this.set('_yasqe', new YASGUI.YASQE() );
+        this.set('_yasqe', new YASGUI.YASQE());
       },
 
-      attached: function(){
-        this.$.chart.set('data', this._datas);
-      },
+      attached: function() {},
 
-      refresh: function( query ) {
+      refresh: function(query, spareQuery) {
 
         console.log(query);
 
-        var query = query || this._query;
+        query = query || this._query;
+        this.set('_query', query);
+        this.set('_spareQuery', spareQuery);
         //this._yasqe.setValue( query );
         //this._yasqe.query( this._drawResponse.bind(this) )
 
@@ -77,11 +142,11 @@
         xhr.setRequestHeader('Content-Type', 'application/sparql-query');
         xhr.withCredentials = true;
         xhr.onerror = function(err) {
-          console.log( err + xhr.status );
+          console.log(err + xhr.status);
         };
-        xhr.onreadystatechange = function () {
+        xhr.onreadystatechange = function() {
           if (xhr.readyState === 4) {
-            that._drawResponse( xhr.response );
+            that._drawResponse(xhr.response);
           }
         };
 
@@ -89,16 +154,48 @@
 
       },
 
-      _drawResponse: function( response ){
+      _drawResponse: function(response) {
+        console.log(this.$.sparqlTableHandler);
 
-        console.log( response );
+        this.set('_lastResponse', response);
+
+        this.set('_visuIndex', 0);
+        this.$.sparqlTableHandler.format(this._lastResponse);
+      },
+
+      _endPointChanged: function() {
+
+        if (this.endPoint !== "")
+          this._yasqe.options.sparql.endpoint = this.endPoint;
 
       },
 
-      _endPointChanged: function(){
+      /**
+       * Display the response as it.
+       *
+       * @method _onRawDatasClicked
+       */
+      _onRawDatasClicked: function() {
+        this.set('_visuIndex', 0);
+        this.$.sparqlTableHandler.format(this._lastResponse);
+      },
 
-        if(this.endPoint !== "")
-          this._yasqe.options.sparql.endpoint = this.endPoint;
+      /**
+       * Display the response in a trace timeline.
+       *
+       * @method _onTimelineClicked
+       */
+      _onTimelineClicked: function() {
+        this.set('_visuIndex', 1);
+        this.$.sparqlObselTimelineHandler.format(this._lastResponse, this._query, this._spareQuery);
+      },
+
+      /**
+       * Display the response with google charts.
+       *
+       * @method _onGoogleChartClicked
+       */
+      _onGoogleChartClicked: function() {
 
       }
 

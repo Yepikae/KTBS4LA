@@ -1,8 +1,12 @@
 <link rel="import" href="../yasgui-component/yasgui-component.html">
 <link rel="import" href="../../bower_components/taaabs-themes/taaabs-dark-theme.html">
+<link rel="import" href="../../bower_components/iron-autogrow-textarea/iron-autogrow-textarea.html">
+<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+
 <dom-module id="taaabs-spare">
 
-  <script type="text/javascript" src="parser.js"></script>
+  <!-- <script type="text/javascript" src="parser.js"></script>  -->
+  <script type="text/javascript" src="parserENG.js"></script>
   <script type="text/javascript" src="ftmXhyxZ.js"></script>
   <template>
     <style include="taaabs-dark-theme"></style>
@@ -69,69 +73,71 @@
         width: 100%;
         padding: 0.2em 1em 0.2em 1em;
         cursor: pointer;
-
         -webkit-transition: background-color .25s ease-in-out;
         -moz-transition: background-color .25s ease-in-out;
         -ms-transition: background-color .25s ease-in-out;
         -o-transition: background-color .25s ease-in-out;
         transition: background-color .25s ease-in-out;
       }
+
       :host .expected:hover {
-        background-color: rgba(0,0,0,0.3);
+        background-color: rgba(0, 0, 0, 0.3);
       }
 
-      :host .activePanel{
+      :host .activePanel {
         background-color: #35ccbf;
       }
     </style>
 
-    <div style="display:table; margin: 0 auto; width: 1000px; table-layout:fixed">
-      <div style="display:table-row">
-        <div style="display:table-cell; width: 50%">
-          <div id="showEditorBtn" on-click="_showEditor" class="button activePanel" style="width: 100%; padding; 1em"> {{localize('editorMode')}} </div>
+    <iron-collapse id="collapse" opened>
+      <div style="display:table; margin: 0 auto; width: 1000px; table-layout:fixed">
+        <div style="display:table-row">
+          <div style="display:table-cell; width: 50%">
+            <div id="showEditorBtn" on-click="_showEditor" class="button activePanel" style="width: 100%; padding; 1em"> {{localize('editorMode')}} </div>
+          </div>
+          <div style="display:table-cell; width: 50%">
+            <div id="showRequestBtn" on-click="_showRequest" class="button" style="width: 100%; padding; 1em"> {{localize('requestMode')}} </div>
+          </div>
         </div>
-        <div style="display:table-cell; width: 50%">
-          <div id="showRequestBtn" on-click="_showRequest" class="button" style="width: 100%; padding; 1em"> {{localize('requestMode')}} </div>
-        </div>
-      </div>
-      <div style="display:table-row">
-        <iron-pages selected="{{_mode}}">
-          <div>
-            <div id="container">
-              <div id="leftPanel">
-                <div id="editor">
-                  <textarea id="textPreview" style="background-color:transparent"></textarea>
-                  <textarea spellcheck="false" placeholder="{{localize('textEditor')}}" id="textEditor"></textarea>
+        <div style="display:table-row">
+          <iron-pages selected="{{_mode}}">
+            <div>
+              <div id="container">
+                <div id="leftPanel">
+                  <div id="editor">
+                    <iron-autogrow-textarea id="textPreview" style="background-color:transparent"></iron-autogrow-textarea>
+                    <iron-autogrow-textarea spellcheck="false" placeholder="{{localize('textEditor')}}" id="textEditor"></iron-autogrow-textarea>
+                  </div>
+                </div>
+                <div id="rightPanel">
+                  <div id="expected">
+                    <div class="expected" style="border-bottom: solid 1px grey"> Expected </div>
+                    <template is="dom-repeat" items="{{_expected}}">
+                      <div class="expected" on-click="_onExpectedItemClicked"> {{item}} </div>
+                    </template>
+                  </div>
                 </div>
               </div>
-              <div id="rightPanel">
-                <div id="expected">
-                  <div class="expected" style="border-bottom: solid 1px grey"> Expected </div>
-                  <template is="dom-repeat" items="{{_expected}}">
-                    <div class="expected" on-click="_onExpectedItemClicked"> {{item}} </div>
-                  </template>
-                </div>
+              <div id="errorContainer">
+                <iron-icon class="fgRed" icon="icons:error"></iron-icon>
+                <span class="fgRed" id="errorMessage"></span>
               </div>
             </div>
-            <div id="errorContainer">
-              <iron-icon class="fgRed" icon="icons:error"></iron-icon>
-              <span class="fgRed" id="errorMessage"></span>
+            <div style="width: 1000px; height: 400px; margin: 0 auto">
+              <iron-autogrow-textarea style="width: 1000px; height: 400px;" id="requestTarget"></iron-autogrow-textarea>
             </div>
-          </div>
-          <div style="width: 1000px; height: 400px; margin: 0 auto">
-            <textarea style="width: 1000px; height: 400px;" id="requestTarget">
-            </textarea>
-          </div>
-        </iron-pages>
+          </iron-pages>
+        </div>
       </div>
-
 
       <pre style="display: block; margin: 0 auto; max-width: 1000px; width: 1000px" id='requestResultDiv'></pre>
       <div on-click="_sendRequest" class="button"> OK </div>
 
-      <div style="margin: 0 auto; width: 1000px;">
-        <yasgui-component id="yc" end-point="{{_endPoint}}"></yasgui-component>
-      </div>
+    </iron-collapse>
+
+    <div style="margin: 0 auto; width: 1000px;">
+      <yasgui-component id="yc" end-point="{{_endPoint}}"></yasgui-component>
+    </div>
   </template>
 
 
@@ -157,8 +163,6 @@
           type: String,
           notify: true,
         },
-
-
 
         traceUrl: {
           type: String,
@@ -212,12 +216,14 @@
 
       },
 
-      attached: function(){
+      attached: function() {
         // Load i18n json.
         this.loadResources(this.resolveUrl('./locales.json'));
 
-        this.$.textEditor.addEventListener('keydown', function(e){
-          if(e.which == 9) { e.preventDefault(); }
+        this.$.textEditor.addEventListener('keydown', function(e) {
+          if (e.which == 9) {
+            e.preventDefault();
+          }
         })
       },
 
@@ -228,21 +234,27 @@
         }
       },
 
-      refresh: function(){
-        if( this.traceUrl !== ""){
-          this.fire('GET_RESOURCE', {url:this.traceUrl, obj:"_trace"});
-          this.set('_endPoint', this.traceUrl+"@obsels");
+      refresh: function() {
+        if (this.traceUrl !== "") {
+          this.fire('GET_RESOURCE', {
+            url: this.traceUrl,
+            obj: "_trace"
+          });
+          this.set('_endPoint', this.traceUrl + "@obsels");
         }
       },
 
-      _traceChanged: function(){
-        if( this._trace ){
-          parserCLN.trace_modelURI = this._trace.model_uri+'#';
-          this.fire('GET_RESOURCE', {url:this._trace.model_uri, obj:"_model"});
+      _traceChanged: function() {
+        if (this._trace) {
+          parserCLN.trace_modelURI = this._trace.model_uri + '#';
+          this.fire('GET_RESOURCE', {
+            url: this._trace.model_uri,
+            obj: "_model"
+          });
         }
       },
 
-      _onModelChanged: function(){},
+      _onModelChanged: function() {},
 
       _textEditor: function(e) {
 
@@ -250,7 +262,7 @@
         this.set('_expected', []);
 
         var _which = null;
-        if(e){
+        if (e) {
           e.preventDefault();
           _which = e.which;
         }
@@ -260,7 +272,6 @@
 
           this.$.errorContainer.style.opacity = 0;
           this.$.rightPanel.style.opacity = 0;
-
 
         } catch (e) {
 
@@ -278,13 +289,13 @@
           //TODO: Remove when Spare grammar is ok
           this._checkExpecteds(e.expected);
 
-          if( this.$.textEditor.value.search(/de type[\s]+$/) !== -1 )
+          if (this.$.textEditor.value.search(/de type[\s]+$/) !== -1)
             for (i = 0; i < this._model.list_type_obsels.length; i++)
               if (this._model.list_type_obsels[i]['@type'] === "ObselType")
-                this.push('_expected', this._model.list_type_obsels[i]['@id'].replace('#',''));
+                this.push('_expected', this._model.list_type_obsels[i]['@id'].replace('#', ''));
 
           if (_which === 9) {
-           this._autoComplete();
+            this._autoComplete();
           }
 
           this.$.errorMessage.textContent = '(line ' + e.location.start.line + ', column ' + e.location.start.column + ') ';
@@ -292,17 +303,29 @@
         }
       },
 
-      _checkExpecteds: function(expecteds){
+      _checkExpecteds: function(expecteds) {
         for (i = 0; i < expecteds.length; i++) {
-          if( expecteds[i].value.search(/\[\.\]/) !== -1 )
+          if (expecteds[i].value.search(/\[\.\]/) !== -1)
             this.push('_expected', '.');
-          else if(expecteds[i].value.search(/[\[\]<'"]/) === -1)
+          else if (expecteds[i].value.search(/[\[\]<'"]/) === -1)
             this.push('_expected', expecteds[i].value);
         }
       },
 
       _sendRequest: function() {
-        this.$.yc.refresh(this.$.requestTarget.value);
+
+        try {
+          var result = parserCLN.parse(this.$.textEditor.value);
+
+          var parsedResult =  parser.parse(result);
+
+          this.$.requestTarget.value = parsedResult;
+        } catch (e) {
+          this.$.requestTarget.value = e;
+        }
+
+        this.$.yc.refresh(this.$.requestTarget.value, this.$.textEditor.value);
+        //this.$.collapse.hide();
       },
 
       _showEditor: function() {
@@ -320,7 +343,6 @@
           this.$.requestTarget.value = result;
           this.set('_mode', 1);
 
-
         } catch (e) {
           this.$.requestTarget.value = e;
           this.set('_mode', 1);
@@ -328,40 +350,39 @@
 
       },
 
-      _onExpectedItemClicked: function(e){
+      _onExpectedItemClicked: function(e) {
         var match = this.$.textEditor.value.match(/[A-zÀ-ú]+[\s]*$/);
-        if( match ){
-          var word = match[0].replace(/\s/g,'');
-          if( e.model.item.indexOf(word) !== -1 ){
-              this.$.textEditor.value = this.$.textEditor.value.slice(0, match['index']);
+        if (match) {
+          var word = match[0].replace(/\s/g, '');
+          if (e.model.item.indexOf(word) !== -1) {
+            this.$.textEditor.value = this.$.textEditor.value.slice(0, match['index']);
           }
         }
 
-        this.$.textEditor.value += e.model.item+" ";
+        this.$.textEditor.value += e.model.item + " ";
         this.$.textEditor.focus();
         this._textEditor();
       },
 
-      _autoComplete: function(){
+      _autoComplete: function() {
         var match = this.$.textEditor.value.match(/[A-zÀ-ú]+[\s]*$/);
         var add = "";
 
-        if( match ){
+        if (match) {
           var word = match[0];
-          for( var i = 0; i < this._expected.length; i++ ){
-            if( this._expected[i].indexOf(word) !== -1 ){
-                this.$.textEditor.value = this.$.textEditor.value.slice(0, match['index']);
-                add = this._expected[i];
+          for (var i = 0; i < this._expected.length; i++) {
+            if (this._expected[i].indexOf(word) !== -1) {
+              this.$.textEditor.value = this.$.textEditor.value.slice(0, match['index']);
+              add = this._expected[i];
             }
           }
         }
-        if( add !== ""){
-          this.$.textEditor.value += add+" ";
+        if (add !== "") {
+          this.$.textEditor.value += add + " ";
           this.$.textEditor.focus();
           this._textEditor();
-        }
-        else{
-          this.$.textEditor.value += this._expected[0]+" ";
+        } else {
+          this.$.textEditor.value += this._expected[0] + " ";
           this.$.textEditor.focus();
           this._textEditor();
         }

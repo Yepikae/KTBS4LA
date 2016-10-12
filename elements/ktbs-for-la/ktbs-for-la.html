@@ -3,22 +3,18 @@
   <template>
     <style include="ktbs-for-la-style"></style>
 
-    <!-- /////// -->
-    <!-- ROUTING -->
-    <!-- /////// -->
+    <!-- ROUTING COMPONENT -->
 
     <app-location route="{{_route}}" use-hash-as-path></app-location>
     <app-route route="[[_route]]" pattern="/:page" data="{{_routePage}}" tail="{{_tail}}">
     </app-route>
-    <app-route route="[[_route]]" pattern="/:page/:resourceurl" data="{{_routeDatas}}">
+    <app-route route="[[_route]]" pattern="/:page/:resourceurl" data="{{_routeDatas}}" tail="{{_routeTails}}">
     </app-route>
 
 
     <app-drawer-layout force-narrow>
 
-      <!-- /////////// -->
       <!-- MENU DRAWER -->
-      <!-- /////////// -->
 
       <app-drawer id="drawer" align="end">
         <div class="menuHeader">
@@ -31,6 +27,9 @@
           {{localize('importcsv')}}
         </div>
         <div class="menuDiv">
+          {{localize('settings')}}
+        </div>
+        <div class="menuDiv">
           {{localize('help')}}
         </div>
         <div>
@@ -38,9 +37,7 @@
         </div>
       </app-drawer>
 
-      <!-- ////////////// -->
       <!-- HEADER TOOLBAR -->
-      <!-- ////////////// -->
 
       <app-header fixed>
         <app-toolbar>
@@ -49,37 +46,31 @@
         </app-toolbar>
       </app-header>
 
-      <!-- //////// -->
       <!-- SECTIONS -->
-      <!-- //////// -->
 
       <iron-pages attr-for-selected="data-route" selected="{{_routePage.page}}">
 
-        <!-- ///////// -->
         <!-- HOME PAGE -->
-        <!-- ///////// -->
 
         <section class="page" id="home" data-route="home">
           <div>
             <h2>KTBS 4 LA</h2>
             <p>{{localize('welcome')}}</p>
-            <a href="#/base-overview"><div class="button">Let's go!</div></a>
+            <a href="#/base-overview">
+              <div class="button">Let's go!</div>
+            </a>
           </div>
         </section>
 
-        <!-- //////////////////// -->
         <!-- TAAABS CSV COLLECTOR -->
-        <!-- //////////////////// -->
 
         <section class="page" data-route="csv-collector">
           <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
-            <taaabs-csv-collector id="tcc" language="[[language]]" base-url="{{_decodeUrl(_routeDatas.resourceurl)}}" taaabs-central-loading></taaabs-csv-collector>
+            <taaabs-csv-collector id="tcc" language="[[language]]" base-url="[[_decodeUrl(_routeDatas.resourceurl)]]" taaabs-central-loading></taaabs-csv-collector>
           </taaabs-resource-loader>
         </section>
 
-        <!-- //////////////////// -->
         <!-- TAAABS BASE OVERVIEW -->
-        <!-- //////////////////// -->
 
         <section class="page" data-route="base-overview">
           <div class="centered">
@@ -91,68 +82,67 @@
           </div>
         </section>
 
-        <!-- /////////////////// -->
         <!-- TAAABS BASE DETAILS -->
-        <!-- /////////////////// -->
 
         <section class="page" data-route="base-details">
           <div class="centered">
             <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
-              <taaabs-base-graph id="tbg" taaabs-central-loading height="300px" bg-color="#2e3842" base-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]">
+              <taaabs-base-graph id="tbg" taaabs-central-loading height="300px" bg-color="#2e3842" base-url="[[_decodeUrl(_routeDatas.resourceurl)]]" language="[[language]]">
               </taaabs-base-graph>
-              <taaabs-base-details id="tbd" base-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]" taaabs-central-loading>
+              <taaabs-base-details id="tbd" base-url="[[_decodeUrl(_routeDatas.resourceurl)]]" language="[[language]]" taaabs-central-loading>
               </taaabs-base-details>
             </taaabs-resource-loader>
           </div>
         </section>
 
-        <!-- //////////////////// -->
         <!-- TAAABS TRACE DETAILS -->
-        <!-- //////////////////// -->
 
         <section class="page" data-route="trace-details">
           <!-- THE TOOLS LINKS -->
           <div class="toolBox bgDarkBlue">
-              <div class="toolLink fgWhite">
-                <a href="#/spare/{{_routeDatas.resourceurl}}" target="_blank">
-                  <div><img src="{{resolveUrl('./images/logoSpare.svg')}}"></img></div>
-                  <div>SPARE</div>
-                </a>
-              </div>
-              <div class="toolLink fgWhite">
-                <a href="#/trace-timeline/{{_routeDatas.resourceurl}}" target="_blank">
-                  <div><img src="{{resolveUrl('./images/logoTimeline.svg')}}"></img></div>
-                  <div>TIMELINE</div>
-                </a>
-              </div>
+            <div class="toolLink fgWhite">
+              <a href="#/spare/{{_routeDatas.resourceurl}}" target="_blank">
+                <div><img src="{{resolveUrl('./images/logoSpare.svg')}}"></img>
+                </div>
+                <div>SPARE</div>
+              </a>
+            </div>
+            <div class="toolLink fgWhite">
+              <a href="#/trace-timeline/{{_routeDatas.resourceurl}}" target="_blank">
+                <div><img src="{{resolveUrl('./images/logoTimeline.svg')}}"></img>
+                </div>
+                <div>TIMELINE</div>
+              </a>
+            </div>
           </div>
           <!-- THE TRACE DETAILS -->
           <div class="centered">
             <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
               <taaabs-trace-details id="ttd" trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]">
               </taaabs-trace-details>
-            </taaabs-resource-loader>  
+            </taaabs-resource-loader>
           </div>
         </section>
 
-        <!-- ///////////////////// -->
-        <!-- TAAABS TRACE TIMELINE -->
-        <!-- ///////////////////// -->
-
-        <section class="page" data-route="trace-timeline">
-          <taaabs-trace-timeline id="ttt" trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]">
-          </taaabs-trace-timeline>
+        <section class="page" data-route="generic-method-from-trace">
+          <taaabs-generic-method id="tgmFT" from-trace="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]">
+          </taaabs-generic-method>
         </section>
 
-        <!-- ////////////////// -->
+        <!-- TAAABS TRACE TIMELINE -->
+
+        <section class="page" data-route="trace-timeline">
+          <!-- <taaabs-trace-timeline id="ttt" trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]">
+          </taaabs-trace-timeline> -->
+          <taaabs-trace-timeline-docker id="ttt" trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]"></taaabs-trace-timeline-docker>
+        </section>
+
         <!-- TAAABS TRACE SPARE -->
-        <!-- ////////////////// -->
 
         <section class="page" data-route="spare">
           <div class="centered">
             <taaabs-resource-loader resources={{shared_resources}} is-loading={{shared_loading_resources_status}} loading-list={{shared_loading_resources}}>
-              <taaabs-spare id="ts" taaabs-central-loading
-                trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]">
+              <taaabs-spare id="ts" taaabs-central-loading trace-url="{{_decodeUrl(_routeDatas.resourceurl)}}" language="[[language]]">
               </taaabs-spare>
             </taaabs-resource-loader>
           </div>
@@ -170,11 +160,11 @@
         properties: {
 
           /**
-          * Url of the ktbs we're working with.
-          *
-          * @attribute ktbsUrl
-          * @type String
-          */
+           * Url of the ktbs we're working with.
+           *
+           * @attribute ktbsUrl
+           * @type String
+           */
           ktbsUrl: {
             type: String,
             notify: true,
@@ -182,11 +172,11 @@
           },
 
           /**
-          * Url of the current base if there's one.
-          *
-          * @attribute _baseUrl
-          * @type String
-          */
+           * Url of the current base if there's one.
+           *
+           * @attribute _baseUrl
+           * @type String
+           */
           _baseUrl: {
             type: String,
             notify: true,
@@ -198,12 +188,12 @@
           //////////
 
           /**
-          * Localization.
-          * fr, en.
-          *
-          * @attribute language
-          * @type String
-          */
+           * Localization.
+           * fr, en.
+           *
+           * @attribute language
+           * @type String
+           */
           language: {
             type: String,
             notify: true,
@@ -215,38 +205,49 @@
           /////////////
 
           /**
-          * First part of the route.
-          * Represents the section we're displaying from the iron-page.
-          *
-          * @attribute _route
-          * @type Object
-          */
+           * First part of the route.
+           * Represents the section we're displaying from the iron-page.
+           *
+           * @attribute _route
+           * @type Object
+           */
           _route: {
             type: Object,
             notify: true,
           },
 
           /**
-          * The data of `_route`, according to the pattern '/:page'.
-          *
-          * @attribute _routePage
-          * @type Object
-          */
+           * The data of `_route`, according to the pattern '/:page'.
+           *
+           * @attribute _routePage
+           * @type Object
+           */
           _routePage: {
             type: Object,
             notify: true,
           },
 
           /**
-          * The datas of `_route`, according to the pattern '/:page/:resourceurl'.
-          *
-          * @attribute _routeDatas
-          * @type Object
-          */
+           * The datas of `_route`, according to the pattern '/:page/:resourceurl'.
+           *
+           * @attribute _routeDatas
+           * @type Object
+           */
           _routeDatas: {
             type: Object,
             notify: true,
           },
+
+          /**
+           * An object containing the rest of the page datas.
+           *
+           * @attribute _routeTails
+           * @type Object
+           */
+          _routeTails: {
+            type: Object,
+            notify: true,
+          }
 
         },
         observers: [
@@ -262,43 +263,46 @@
           // Load i18n json.
           this.loadResources(this.resolveUrl('./locales.json'));
 
-          var that = this;
-
           // Set event listener for taaabs-base-overview component.
-          this.$.tbo.addEventListener('baseSelected', function(e) {
+          this.$.tbo.addEventListener('BASE_SELECTED', function(e) {
             if (e.detail.which !== 2) {
-              that.set('_route.path', '/base-details/' + encodeURIComponent(e.detail.baseId));
+              this.set('_route.path', '/base-details/' + encodeURIComponent(e.detail.baseId));
             } else {
               window.open("#/base-details/" + encodeURIComponent(e.detail.baseId));
             }
-          });
+          }.bind(this));
 
           //Set event listener for taaabs-base-graph
-          this.$.tbg.addEventListener('REFRESHED', function(){
-            that.$.tbd.refresh();
-          });
-
+          this.$.tbg.addEventListener('REFRESHED', function() {
+            this.$.tbd.refresh();
+          }.bind(this));
 
           // Set event listerner for taaabs-base-details component.
-          this.$.tbd.addEventListener('resourceSelected', function(e){
-            if (e.detail.resourceType === "StoredTrace") {
+          this.$.tbd.addEventListener('RESOURCE_SELECTED', function(e) {
+
+            // this.$.baseDetailsModal.open();
+
+
+            // .resource
+            if (e.detail.resource['@type'] === "StoredTrace") {
               if (e.detail.which !== 2) {
-                that.set('_route.path', '/trace-details/' + encodeURIComponent(e.detail.resourceURL));
+                this.set('_route.path', '/trace-details/' + encodeURIComponent(e.detail.resource.uri));
               } else {
-                window.open("#/trace-details/" + encodeURIComponent(e.detail.resourceURL));
+                window.open("#/trace-details/" + encodeURIComponent(e.detail.resource.uri));
+              }
+            } else if (e.detail.resource['@type'] === "Base") {
+              if (e.detail.which !== 2) {
+                this.set('_route.path', '/base-details/' + encodeURIComponent(e.detail.resource.uri));
+              } else {
+                window.open("#/base-details/" + encodeURIComponent(e.detail.resource.uri));
               }
             }
-            else if (e.detail.resourceType === "Base") {
-              if (e.detail.which !== 2) {
-                that.set('_route.path', '/base-details/' + encodeURIComponent(e.detail.resourceURL));
-              } else {
-                window.open("#/base-details/" + encodeURIComponent(e.detail.resourceURL));
-              }
-            }
-          });
-          this.$.tbd.addEventListener('RESOURCE_CHANGED', function(){
-            that.$.tbg.refresh();
-          })
+
+          }.bind(this));
+
+          this.$.tbd.addEventListener('RESOURCE_CHANGED', function() {
+            this.$.tbg.refresh();
+          }.bind(this));
 
         },
 
@@ -307,33 +311,32 @@
         //////////////////////////////
 
         /**
-        * `#homeBtn` on-click function.
-        *
-        * @method _home
-        */
+         * `#homeBtn` on-click function.
+         *
+         * @method _home
+         */
         _home: function() {
           this.set('_route.path', '/home/');
         },
 
         /**
-        * `#drawerBtn` on-click function.
-        *
-        * @method _toggleDrawer
-        */
+         * `#drawerBtn` on-click function.
+         *
+         * @method _toggleDrawer
+         */
         _toggleDrawer: function() {
           this.$.drawer.toggle();
         },
 
         /**
-        * "Import csv" button on-click function.
-        *
-        * @method _onImportCSVClicked
-        */
-        _onImportCSVClicked: function(){
-          if( this._baseUrl !== "" ){
+         * "Import csv" button on-click function.
+         *
+         * @method _onImportCSVClicked
+         */
+        _onImportCSVClicked: function() {
+          if (this._baseUrl !== "") {
             this.set('_route.path', '/csv-collector/' + encodeURIComponent(this._baseUrl));
-          }
-          else{
+          } else {
             this.set('_route.path', '/base-overview');
           }
         },
@@ -343,53 +346,53 @@
         ///////////////////////
 
         /**
-        * `_route.path` observer function.
-        *
-        * @param {!required} path {String} '_route.path'.
-        *
-        * @method _onRoutePathChanged
-        */
+         * `_route.path` observer function.
+         *
+         * @param {!required} path {String} '_route.path'.
+         *
+         * @method _onRoutePathChanged
+         */
         _onRoutePathChanged: function(path) {
           // If we do not have an initial URL, we redirect to /home/
           if (!path || path === '/') {
             this.set('_route.path', '/home/');
           }
-          window.scrollTo(0,0);
+          window.scrollTo(0, 0);
         },
 
         /**
-        * `_routeDatas` observer function.
-        *
-        * @param {!required} path {String} '_routeDatas'.
-        *
-        * @method _onRouteDatasChanged
-        */
-        _onRouteDatasChanged: function( datas ){
-          this.set('_baseUrl',"");
+         * `_routeDatas` observer function.
+         *
+         * @param {!required} path {String} '_routeDatas'.
+         *
+         * @method _onRouteDatasChanged
+         */
+        _onRouteDatasChanged: function(datas) {
+          this.set('_baseUrl', "");
           switch (datas.page) {
             case 'base-details':
-              this.set('_baseUrl',decodeURIComponent(datas.resourceurl));
+              this.set('_baseUrl', decodeURIComponent(datas.resourceurl));
               this.$.tbg.refresh();
-            break;
+              break;
             case 'csv-collector':
               this.$.tcc.refresh();
-            break;
+              break;
             case 'spare':
               this.$.ts.refresh();
-            break;
+              break;
             case 'trace-timeline':
-              this.$.ttt.refresh();
-            break;
+              this.$.ttt.giveMeEverything();
+              break;
           }
         },
 
         /**
-        * Decode an encoded URL. Called by components as taaabs-base-details.
-        *
-        * @param {!required} url {String} An encoded URL.
-        *
-        * @method _decodeUrl
-        */
+         * Decode an encoded URL. Called by components as taaabs-base-details.
+         *
+         * @param {!required} url {String} An encoded URL.
+         *
+         * @method _decodeUrl
+         */
         _decodeUrl: function(url) {
           return decodeURIComponent(url);
         }
